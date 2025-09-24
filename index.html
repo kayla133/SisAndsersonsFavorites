@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Student Daily Journal</title>
+<style>
+  /* ========== Theme variables (editable from Settings UI) ========== */
+  :root{
+    --primary-color: #5b8def;
+    --accent-color: #ffcc00;
+    --bg-color: #f7f9fc;
+    --card-color: #ffffff;
+    --text-color: #123;
+    --muted-color: #556;
+    --font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    --base-font-size: 16px;
+    --radius: 12px;
+    --shadow: 0 6px 20px rgba(30,40,60,0.08);
+  }
+
+  /* ========== Basic layout ========== */
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--font-family);
+    font-size:var(--base-font-size);
+    color:var(--text-color);
+    background:linear-gradient(180deg,var(--bg-color), #eef4ff 80%);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+  .app {
+    max-width:1100px;
+    margin:24px auto;
+    padding:18px;
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:18px;
+  }
+
+  header{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:6px;
+  }
+  h1{margin:0;font-size:1.35rem;color:var(--primary-color)}
+  .sub{color:var(--muted-color);font-size:0.95rem}
+
+  /* ========== Main Card / Panels ========== */
+  .card{
+    background:var(--card-color);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow);
+  }
+  .left-col{display:grid; gap:12px;}
+  .right-col{display:flex; flex-direction:column; gap:12px; height:fit-content;}
+  .panel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .small{font-size:0.92rem;color:var(--muted-color)}
+
+  /* Inputs */
+  label{display:block;font-weight:600;margin-bottom:6px;font-size:0.95rem}
+  input[type="text"], input[type="time"], select, textarea {
+    width:100%;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid #e6eef8;
+    background:#fff;
+    box-sizing:border-box;
+    font-size:0.95rem;
+  }
+  textarea{min-height:72px; resize:vertical;}
+  .row{display:flex;gap:8px}
+  .row > * {flex:1}
+
+  button{
+    background:var(--primary-color);
+    color:white;
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button.ghost{background:transparent;color:var(--primary-color);border:1px solid rgba(0,0,0,0.06)}
+  .muted{color:var(--muted-color);font-weight:600}
+
+  /* List styling */
+  ul.list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+  li.item{display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px;border:1px solid #f0f4fb;background:linear-gradient(180deg,#fff,#fbfdff)}
+  .item .left{flex:1}
+  .item .right{display:flex;gap:8px;align-items:center}
+
+  /* Photo gallery */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .photo-card{border-radius:10px;overflow:hidden;position:relative}
+  .photo-card img{display:block;width:100%;height:120px;object-fit:cover}
+  .caption{padding:8px;font-size:0.9rem;color:var(--muted-color);background:rgba(255,255,255,0.9)}
+
+  /* Mood controls */
+  .mood-row{display:flex;align-items:center;gap:10px}
+  .mood-emoji{font-size:26px}
+  .mood-slider{flex:1}
+
+  /* Streak */
+  .streak{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:linear-gradient(90deg,var(--primary-color),var(--accent-color));
+    color:white;font-weight:700;
+  }
+
+  /* Settings panel */
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .color-swatch{height:36px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)}
+  .footer{grid-column:1 / -1; font-size:0.9rem; color:var(--muted-color); margin-top:6px}
+
+  /* Responsive */
+  @media (max-width:980px){
+    .app{grid-template-columns:1fr; padding:12px}
+    .right-col{order:2}
+  }
+  .controls {display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+
+  /* tiny helper */
+  .badge{background:var(--accent-color); padding:4px 8px;border-radius:999px;font-weight:700;color:#123}
+  .task-done{text-decoration:line-through;color:var(--muted-color)}
+  .time {font-size:0.85rem;color:var(--muted-color)}
+  .memories-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+  .mem-card{padding:8px;border-radius:10px;background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid #eef6ff}
+  .small-actions{display:flex;gap:6px}
+  .danger{background:#ff6b6b}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>DaySpark — Student Daily Journal</h1>
+      <div class="sub">Log your day with photos, schedule, tasks, moods & memories</div>
+    </div>
+    <div class="controls">
+      <div id="streakWrap" class="streak card" title="Consecutive journaling days">
+        <div id="streakCount">0</div>
+        <div style="font-size:0.95rem">day streak</div>
+      </div>
+      <button id="openSettingsBtn" class="ghost">⚙ Settings</button>
+    </div>
+  </header>
+
+  <div class="left-col">
+    <!-- Photo Upload / Journal -->
+    <div class="card" id="photoPanel">
+      <div class="panel-title">
+        <div>
+          <strong>Photo Journal</strong><div class="small">Upload photos and add a caption</div>
+        </div>
+      </div>
+      <div>
+        <input id="photoInput" type="file" accept="image/*" />
+        <label for="photoCaption" style="margin-top:8px">Caption</label>
+        <input id="photoCaption" type="text" placeholder="Write a caption..." />
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="addPhotoBtn">Add Photo</button>
+          <button id="addPhotoTodayBtn" class="ghost">Add & Mark Today</button>
+        </div>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="small">Gallery</div>
+        <div class="small muted">Stored locally on this device</div>
+      </div>
+      <div id="gallery" class="gallery"></div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="card" id="schedulePanel">
+      <div class="panel-title">
+        <strong>Daily Schedule</strong>
+        <div class="small">Add classes, study time or events</div>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <input id="schedTitle" type="text" placeholder="Event title (e.g., Math)" />
+        <input id="schedTime" type="time" />
+      </div>
+      <div style="display:flex;gap:8px">
+        <select id="schedPriority">
+          <option value="normal">Normal</option>
+          <option value="high">High priority</option>
+          <option value="low">Low priority</option>
+        </select>
+        <button id="addSchedBtn">Add to Schedule</button>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+      <ul id="scheduleList" class="list"></ul>
+    </div>
+
+    <!-- To-Do -->
+    <div class="card" id="todoPanel">
+      <div class="panel-title">
+        <strong>To-Do List</strong>
+        <div class="small">Tasks, priorities and quick check-offs</div>
+      </div>
+      <div class="row">
+        <input id="taskText" type="text" placeholder="New task" />
+        <select id="taskPriority" style="max-width:120px">
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="addTaskBtn">Add Task</button>
+        <button id="clearCompletedBtn" class="ghost">Clear Completed</button>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+      <ul id="taskList" class="list"></ul>
+    </div>
+
+    <!-- Mood Tracker -->
+    <div class="card" id="moodPanel">
+      <div class="panel-title">
+        <strong>Mood Scale</strong>
+        <div class="small">Log your mood each day (emoji + slider)</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mood-emoji" id="moodEmoji">🙂</div>
+        <input id="moodSlider" class="mood-slider" type="range" min="1" max="5" value="3" />
+        <button id="saveMoodBtn">Save Mood</button>
+      </div>
+      <div style="margin-top:8px" class="small muted">Recent moods</div>
+      <ul id="moodList" class="list"></ul>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <aside class="right-col">
+    <!-- Today / Quick add -->
+    <div class="card">
+      <div class="panel-title">
+        <strong>Quick Log Today</strong>
+        <div class="small">Add a short note that counts toward streak</div>
+      </div>
+      <textarea id="quickNote" placeholder="Write a one-line note about today..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="saveQuickBtn">Save Quick Log</button>
+        <button id="exportBtn" class="ghost">Export JSON</button>
+      </div>
+    </div>
+
+    <!-- Memories -->
+    <div class="card">
+      <div class="panel-title">
+        <strong>Memories</strong>
+        <div class="small">Automatic highlights from your entries</div>
+      </div>
+      <div id="memories" class="memories-list"></div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="regenMemoriesBtn" class="ghost">Refresh Memories</button>
+        <button id="clearAllBtn" class="danger">Clear All Data</button>
+      </div>
+    </div>
+
+    <!-- Settings (hidden until clicked) -->
+    <div class="card" id="settingsCard" style="display:none">
+      <div class="panel-title">
+        <strong>Appearance Settings</strong>
+        <div class="small">Customize fonts & colors</div>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <label>Primary color</label>
+          <input type="color" id="primaryColor" value="#5b8def" class="color-swatch"/>
+        </div>
+        <div>
+          <label>Accent color</label>
+          <input type="color" id="accentColor" value="#ffcc00" class="color-swatch"/>
+        </div>
+        <div>
+          <label>Background color</label>
+          <input type="color" id="bgColor" value="#f7f9fc" class="color-swatch"/>
+        </div>
+        <div>
+          <label>Card color</label>
+          <input type="color" id="cardColor" value="#ffffff" class="color-swatch"/>
+        </div>
+        <div>
+          <label>Font family</label>
+          <select id="fontSelect">
+            <option value='"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'>Inter / System</option>
+            <option value='"Roboto", "Helvetica Neue", Arial, sans-serif'>Roboto</option>
+            <option value='"Georgia", serif'>Georgia (serif)</option>
+            <option value='"Comic Sans MS", "Comic Sans", cursive'>Playful (comic)</option>
+            <option value='"Courier New", monospace'>Monospace</option>
+          </select>
+        </div>
+        <div>
+          <label>Base font size</label>
+          <select id="fontSizeSelect">
+            <option value="14px">14px (compact)</option>
+            <option value="16px" selected>16px (default)</option>
+            <option value="18px">18px (large)</option>
+            <option value="20px">20px (extra)</option>
+          </select>
+        </div>
+        <div class="footer">Changes are saved automatically for this browser.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* ===========================
+   Persistence utilities
+   =========================== */
+const DB = {
+  photosKey: 'dayspark_photos',
+  tasksKey: 'dayspark_tasks',
+  schedKey: 'dayspark_sched',
+  moodsKey: 'dayspark_moods',
+  notesKey: 'dayspark_notes', // keyed by date
+  settingsKey: 'dayspark_settings'
+};
+
+function save(key, obj){
+  localStorage.setItem(key, JSON.stringify(obj));
+}
+function load(key, fallback){
+  const v = localStorage.getItem(key);
+  if (!v) return fallback;
+  try { return JSON.parse(v); } catch(e){ return fallback; }
+}
+
+/* ===========================
+   Helper / Date utils
+   =========================== */
+const todayISO = () => {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+};
+const dateISO = dt => {
+  if (!dt) return todayISO();
+  const d = new Date(dt);
+  return d.toISOString().slice(0,10);
+};
+function daysBetween(aISO, bISO){
+  const a = new Date(aISO);
+  const b = new Date(bISO);
+  return Math.round((new Date(b) - new Date(a)) / (1000*60*60*24));
+}
+
+/* ===========================
+   Load initial store
+   =========================== */
+let photos = load(DB.photosKey, []);     // [{id, date, caption, dataURL}]
+let tasks = load(DB.tasksKey, []);       // [{id,text,priority,done,created}]
+let schedule = load(DB.schedKey, []);    // [{id,title,time,priority}]
+let moods = load(DB.moodsKey, []);       // [{date, val, emoji}]
+let notes = load(DB.notesKey, {});       // {date: [shortNotes]}
+let settings = load(DB.settingsKey, {});  // theme settings
+
+/* ===========================
+   Rendering functions
+   =========================== */
+
+function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+
+/* --- Gallery --- */
+const galleryEl = document.getElementById('gallery');
+function renderGallery(){
+  galleryEl.innerHTML = '';
+  if (!photos.length){
+    galleryEl.innerHTML = '<div class="small muted">No photos yet — add one above.</div>';
+    return;
+  }
+  // show newest first
+  photos.slice().reverse().forEach(p => {
+    const c = document.createElement('div'); c.className = 'photo-card';
+    const img = document.createElement('img'); img.src = p.dataURL; img.alt = p.caption || 'photo';
+    const cap = document.createElement('div'); cap.className='caption';
+    cap.innerHTML = `<div style="font-weight:700">${p.caption || 'No caption'}</div><div class="time">${p.date}</div>`;
+    const actions = document.createElement('div'); actions.style.padding='6px';
+    const del = document.createElement('button'); del.textContent='Delete'; del.className='ghost';
+    del.onclick = ()=>{ if (confirm('Delete this photo?')) { photos = photos.filter(x=>x.id!==p.id); save(DB.photosKey,photos); renderGallery(); renderMemories(); } };
+    actions.appendChild(del);
+    c.appendChild(img);
+    c.appendChild(cap);
+    c.appendChild(actions);
+    galleryEl.appendChild(c);
+  });
+}
+
+/* --- Schedule --- */
+const scheduleList = document.getElementById('scheduleList');
+function renderSchedule(){
+  scheduleList.innerHTML = '';
+  if (!schedule.length) { scheduleList.innerHTML = '<div class="small muted">No events yet.</div>'; return; }
+  // sort by time
+  const sorted = schedule.slice().sort((a,b)=> (a.time||'') > (b.time||'') ? 1 : -1);
+  for (const item of sorted){
+    const li = document.createElement('li'); li.className='item';
+    const left = document.createElement('div'); left.className='left';
+    left.innerHTML = `<div style="font-weight:700">${escapeHtml(item.title)}</div><div class="time">${item.time || ''} · ${item.priority}</div>`;
+    const right = document.createElement('div'); right.className='right';
+    const del = document.createElement('button'); del.className='ghost'; del.textContent='Delete';
+    del.onclick = ()=>{ schedule = schedule.filter(x=>x.id!==item.id); save(DB.schedKey,schedule); renderSchedule(); };
+    right.appendChild(del);
+    li.appendChild(left); li.appendChild(right);
+    scheduleList.appendChild(li);
+  }
+}
+
+/* --- Tasks --- */
+const taskList = document.getElementById('taskList');
+function renderTasks(){
+  taskList.innerHTML = '';
+  if (!tasks.length) { taskList.innerHTML = '<div class="small muted">No tasks yet.</div>'; return; }
+  for (const t of tasks.slice().reverse()){
+    const li = document.createElement('li'); li.className='item';
+    const left = document.createElement('div'); left.className='left';
+    left.innerHTML = `<div class="${t.done ? 'task-done' : ''}">${escapeHtml(t.text)}</div><div class="time">${t.priority} · ${t.created.slice(0,10)}</div>`;
+    const right = document.createElement('div'); right.className='right';
+    const chk = document.createElement('input'); chk.type='checkbox'; chk.checked = !!t.done;
+    chk.onchange = ()=>{ t.done = chk.checked; save(DB.tasksKey,tasks); renderTasks(); };
+    const del = document.createElement('button'); del.className='ghost'; del.textContent='Delete';
+    del.onclick = ()=>{ tasks = tasks.filter(x=>x.id!==t.id); save(DB.tasksKey,tasks); renderTasks(); };
+    right.appendChild(chk); right.appendChild(del);
+    li.appendChild(left); li.appendChild(right);
+    taskList.appendChild(li);
+  }
+}
+
+/* --- Moods --- */
+const moodList = document.getElementById('moodList');
+function emojiFor(val){
+  if (val<=1) return '😫';
+  if (val===2) return '😕';
+  if (val===3) return '🙂';
+  if (val===4) return '😄';
+  return '🤩';
+}
+function renderMoods(){
+  moodList.innerHTML = '';
+  if (!moods.length) { moodList.innerHTML = '<div class="small muted">No moods logged yet.</div>'; return; }
+  for (const m of moods.slice().reverse()){
+    const li = document.createElement('li'); li.className='item';
+    const left = document.createElement('div'); left.className='left';
+    left.innerHTML = `<div style="font-weight:700">${emojiFor(m.val)}  Mood ${m.val}</div><div class="time">${m.date}</div>`;
+    li.appendChild(left);
+    moodList.appendChild(li);
+  }
+}
+
+/* --- Memories (very simple curation) --- */
+const memoriesEl = document.getElementById('memories');
+function renderMemories(){
+  memoriesEl.innerHTML = '';
+  // collect highlights: latest photos, highest moods, tasks completed recently
+  const recentPhotos = photos.slice().sort((a,b)=> b.date.localeCompare(a.date)).slice(0,4);
+  const topMoods = moods.slice().sort((a,b)=> b.val - a.val).slice(0,4);
+  const completed = tasks.filter(t=>t.done).slice(-4).reverse();
+
+  const pieces = [];
+
+  recentPhotos.forEach(p=>pieces.push({type:'photo', date:p.date, data:p}));
+  topMoods.forEach(m=>pieces.push({type:'mood', date:m.date, data:m}));
+  completed.forEach(t=>pieces.push({type:'task', date:t.created.slice(0,10), data:t}));
+
+  // sort by date desc and show up to 6
+  pieces.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  const shown = pieces.slice(0,6);
+  if (!shown.length) { memoriesEl.innerHTML = '<div class="small muted">No memories yet — add photos, moods or complete tasks to fill this.</div>'; return; }
+
+  for (const p of shown){
+    const div = document.createElement('div'); div.className='mem-card';
+    if (p.type==='photo'){
+      div.innerHTML = `<div style="height:110px;overflow:hidden;border-radius:8px;margin-bottom:8px"><img src="${p.data.dataURL}" style="width:100%;height:110px;object-fit:cover;border-radius:6px"></div>
+                       <div style="font-weight:700">${escapeHtml(p.data.caption || 'Photo')}</div><div class="time">${p.date}</div>`;
+    } else if (p.type==='mood'){
+      div.innerHTML = `<div style="font-size:28px">${emojiFor(p.data.val)}</div><div style="font-weight:700">Mood ${p.data.val}</div><div class="time">${p.date}</div>`;
+    } else {
+      div.innerHTML = `<div style="font-weight:700">${escapeHtml(p.data.text)}</div><div class="time">${p.date}</div>`;
+    }
+    memoriesEl.appendChild(div);
+  }
+}
+
+/* --- Streak computation --- */
+function updateStreak(){
+  // any date that has photos, moods, notes, or tasks completed counts as "logged"
+  const loggedDates = new Set();
+  photos.forEach(p=> loggedDates.add(p.date));
+  moods.forEach(m=> loggedDates.add(m.date));
+  Object.keys(notes||{}).forEach(d=> loggedDates.add(d));
+  tasks.forEach(t => { if (t.done) loggedDates.add(t.created.slice(0,10)); });
+
+  // starting from today, count back consecutive days present
+  let streak = 0;
+  let cur = new Date();
+  while(true){
+    const iso = cur.toISOString().slice(0,10);
+    if (loggedDates.has(iso)){
+      streak++;
+      cur.setDate(cur.getDate() - 1);
+    } else break;
+  }
+  document.getElementById('streakCount').textContent = streak;
+}
+
+/* ===========================
+   Event handlers
+   =========================== */
+
+/* Photo add (reads file as dataURL) */
+const photoInput = document.getElementById('photoInput');
+document.getElementById('addPhotoBtn').addEventListener('click', ()=> addPhoto(false));
+document.getElementById('addPhotoTodayBtn').addEventListener('click', ()=> addPhoto(true));
+
+function addPhoto(markToday){
+  const file = photoInput.files[0];
+  const caption = document.getElementById('photoCaption').value.trim();
+  if (!file){ alert('Choose an image file first.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const dataURL = e.target.result;
+    const entry = { id: uid('p'), date: markToday? todayISO() : dateISO(), caption, dataURL };
+    photos.push(entry);
+    save(DB.photosKey, photos);
+    photoInput.value=''; document.getElementById('photoCaption').value='';
+    renderGallery(); renderMemories(); updateStreak();
+  };
+  reader.readAsDataURL(file);
+}
+
+/* Schedule add */
+document.getElementById('addSchedBtn').addEventListener('click', ()=>{
+  const title = document.getElementById('schedTitle').value.trim();
+  const time = document.getElementById('schedTime').value;
+  const priority = document.getElementById('schedPriority').value;
+  if (!title){ alert('Enter event title'); return; }
+  schedule.push({ id: uid('s'), title, time, priority });
+  save(DB.schedKey, schedule);
+  document.getElementById('schedTitle').value=''; document.getElementById('schedTime').value='';
+  renderSchedule();
+});
+
+/* Tasks */
+document.getElementById('addTaskBtn').addEventListener('click', ()=>{
+  const text = document.getElementById('taskText').value.trim();
+  const pr = document.getElementById('taskPriority').value;
+  if (!text) { alert('Enter a task'); return; }
+  const entry = { id: uid('t'), text, priority:pr, done:false, created: new Date().toISOString() };
+  tasks.push(entry);
+  save(DB.tasksKey,tasks);
+  document.getElementById('taskText').value='';
+  renderTasks(); updateStreak();
+});
+document.getElementById('clearCompletedBtn').addEventListener('click', ()=>{
+  tasks = tasks.filter(t => !t.done);
+  save(DB.tasksKey,tasks);
+  renderTasks();
+});
+
+/* Mood */
+const moodEmojiEl = document.getElementById('moodEmoji');
+const moodSlider = document.getElementById('moodSlider');
+moodSlider.addEventListener('input', ()=> { moodEmojiEl.textContent = emojiFor(Number(moodSlider.value)); });
+document.getElementById('saveMoodBtn').addEventListener('click', ()=>{
+  const val = Number(moodSlider.value); const iso = todayISO();
+  moods = moods.filter(m=> m.date !== iso); // one per day
+  moods.push({ date: iso, val });
+  save(DB.moodsKey, moods);
+  renderMoods(); renderMemories(); updateStreak();
+});
+
+/* Quick note */
+document.getElementById('saveQuickBtn').addEventListener('click', ()=>{
+  const text = document.getElementById('quickNote').value.trim();
+  if (!text) { alert('Write a short note'); return; }
+  const iso = todayISO();
+  if (!notes[iso]) notes[iso] = [];
+  notes[iso].push({ id: uid('n'), text, time: new Date().toISOString() });
+  save(DB.notesKey, notes);
+  document.getElementById('quickNote').value='';
+  updateStreak();
+  alert('Quick note saved');
+});
+
+/* Export / Clear all */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const payload = { photos, tasks, schedule, moods, notes, settings };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'dayspark-backup.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+  if (!confirm('Clear ALL saved data in this browser? This cannot be undone.')) return;
+  localStorage.removeItem(DB.photosKey);
+  localStorage.removeItem(DB.tasksKey);
+  localStorage.removeItem(DB.schedKey);
+  localStorage.removeItem(DB.moodsKey);
+  localStorage.removeItem(DB.notesKey);
+  localStorage.removeItem(DB.settingsKey);
+  photos = tasks = schedule = moods = []; notes = {};
+  renderAll();
+});
+
+/* Regenerate memories (simple shuffle) */
+document.getElementById('regenMemoriesBtn').addEventListener('click', renderMemories);
+
+/* Settings open */
+document.getElementById('openSettingsBtn').addEventListener('click', ()=>{
+  const s = document.getElementById('settingsCard');
+  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+});
+
+/* Settings: adjust CSS variables & save */
+const primaryColorInput = document.getElementById('primaryColor');
+const accentColorInput = document.getElementById('accentColor');
+const bgColorInput = document.getElementById('bgColor');
+const cardColorInput = document.getElementById('cardColor');
+const fontSelect = document.getElementById('fontSelect');
+const fontSizeSelect = document.getElementById('fontSizeSelect');
+
+function loadSettingsToUI(){
+  const s = settings || {};
+  if (s.primary) primaryColorInput.value = s.primary;
+  if (s.accent) accentColorInput.value = s.accent;
+  if (s.bg) bgColorInput.value = s.bg;
+  if (s.card) cardColorInput.value = s.card;
+  if (s.font) fontSelect.value = s.font;
+  if (s.fontSize) fontSizeSelect.value = s.fontSize;
+  applySettings(s);
+}
+function applySettings(s){
+  const root = document.documentElement.style;
+  if (s.primary) root.setProperty('--primary-color', s.primary);
+  if (s.accent) root.setProperty('--accent-color', s.accent);
+  if (s.bg) root.setProperty('--bg-color', s.bg);
+  if (s.card) root.setProperty('--card-color', s.card);
+  if (s.font) root.setProperty('--font-family', s.font);
+  if (s.fontSize) root.setProperty('--base-font-size', s.fontSize);
+  // persist
+  save(DB.settingsKey, s);
+  settings = s;
+}
+
+[primaryColorInput, accentColorInput, bgColorInput, cardColorInput].forEach(inp=>{
+  inp.addEventListener('input', ()=> {
+    const s = Object.assign({}, settings, { primary: primaryColorInput.value, accent: accentColorInput.value, bg: bgColorInput.value, card: cardColorInput.value, font: fontSelect.value, fontSize: fontSizeSelect.value });
+    applySettings(s);
+  });
+});
+fontSelect.addEventListener('change', ()=> {
+  const s = Object.assign({}, settings, { font: fontSelect.value, fontSize: fontSizeSelect.value, primary: primaryColorInput.value, accent: accentColorInput.value, bg: bgColorInput.value, card: cardColorInput.value });
+  applySettings(s);
+});
+fontSizeSelect.addEventListener('change', ()=> {
+  const s = Object.assign({}, settings, { font: fontSelect.value, fontSize: fontSizeSelect.value, primary: primaryColorInput.value, accent: accentColorInput.value, bg: bgColorInput.value, card: cardColorInput.value });
+  applySettings(s);
+});
+
+/* Utility: escape HTML for inserts */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+}
+
+/* Clear completed tasks (already wired) */
+
+/* Initialize UI on load */
+function renderAll(){
+  renderGallery();
+  renderSchedule();
+  renderTasks();
+  renderMoods();
+  renderMemories();
+  updateStreak();
+  loadSettingsToUI();
+}
+renderAll();
+
+/* Load existing settings */
+if (Object.keys(settings||{}).length) loadSettingsToUI();
+
+/* Utility: listen for file uploads preview (optional) */
+photoInput.addEventListener('change', (ev)=>{
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // simple preview in caption field as small data URL (not necessary)
+    // We won't auto-add — user must press the button.
+  };
+  reader.readAsDataURL(file);
+});
+
+/* Small touch: when saving mood or photo, ensure notes object exists for today to count for streak */
+function markLoggedToday(){
+  const iso = todayISO();
+  if (!notes[iso]) notes[iso] = [];
+  save(DB.notesKey, notes);
+}
+
+/* After certain actions, mark today as logged */
+document.getElementById('addPhotoBtn').addEventListener('click', ()=> markLoggedToday());
+document.getElementById('addPhotoTodayBtn').addEventListener('click', ()=> markLoggedToday());
+document.getElementById('saveMoodBtn').addEventListener('click', ()=> markLoggedToday());
+document.getElementById('addTaskBtn').addEventListener('click', ()=> markLoggedToday());
+
+/* Optional: import if user drops a backup file into the page */
+window.addEventListener('paste', (ev)=>{
+  // ignore
+});
+
+/* Good UX: warn if localStorage is disabled */
+try {
+  localStorage.setItem('__dayspark_test','1'); localStorage.removeItem('__dayspark_test');
+} catch(e){
+  alert('Warning: your browser is blocking localStorage. Data may not persist.');
+}
+</script>
+</body>
+</html>
+
