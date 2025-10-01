@@ -22,12 +22,12 @@ const mime = {
 };
 
 const server = http.createServer((req, res) => {
-  // デフォルトで / → /index.html
+// Default: / → /index.html
   let filePath = req.url.split('?')[0];
   if (filePath === '/' || filePath === '') filePath = '/index.html';
   const fullPath = path.join(PUBLIC_DIR, path.normalize(filePath));
 
-  // パス外参照をブロック
+// Block access to paths outside the project
   if (!fullPath.startsWith(PUBLIC_DIR)) {
     res.writeHead(403); return res.end('Forbidden');
   }
