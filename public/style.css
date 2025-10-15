@@ -1,3 +1,4 @@
+
 /* ========== Theme variables (editable) ========== */
 :root {
   --primary-color: #5b8def;
@@ -133,3 +134,18 @@ li.item { display: flex; align-items: center; gap: 12px; padding: 8px; border-ra
 .mem-card { padding: 8px; border-radius: 10px; background: linear-gradient(180deg, #fff, #f8fbff); border: 1px solid #eef6ff; }
 .small-actions { display: flex; gap: 6px; }
 .danger { background: #ff6b6b; }
+.add-memories-btn {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-memories-btn:hover {
+  background: #4a6fd1; /* slightly darker on hover */
+}
