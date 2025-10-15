@@ -1,192 +1,171 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Student Daily Journal</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div class="app">
-  <header>
-    <div>
-      <h1>DaySpark — Student Daily Journal</h1>
-      <div class="sub">Log your day with photos, schedule, tasks, moods & memories</div>
-    </div>
-    <div class="controls">
-      <div id="streakWrap" class="streak card" title="Consecutive journaling days">
-        <div id="streakCount">0</div>
-        <div style="font-size:0.95rem">day streak</div>
-      </div>
-      <button id="openSettingsBtn" class="ghost">⚙ Settings</button>
-    </div>
-  </header>
-
-  <div class="left-col">
-    <!-- Photo Upload / Journal -->
-    <div class="card" id="photoPanel">
-      <div class="panel-title">
-        <div>
-          <strong>Photo Journal</strong><div class="small">Upload photos and add a caption</div>
-        </div>
-      </div>
+  <div class="app">
+    <header>
       <div>
-        <input id="photoInput" type="file" accept="image/*" />
-        <label for="photoCaption" style="margin-top:8px">Caption</label>
-        <input id="photoCaption" type="text" placeholder="Write a caption..." />
+        <h1>DaySpark — Student Daily Journal</h1>
+        <div class="sub">Log your day with photos, schedule, tasks, moods & memories</div>
+      </div>
+      <div class="controls">
+        <div id="streakWrap" class="streak card" title="Consecutive journaling days">
+          <div id="streakCount">0</div>
+          <div style="font-size:0.95rem">day streak</div>
+        </div>
+        <button id="openSettingsBtn" class="ghost">⚙ Settings</button>
+      </div>
+    </header>
+
+    <div class="left-col"> <!-- Photo Upload / Journal -->
+      <div class="card" id="photoPanel">
+        <div class="panel-title">
+          <div> <strong>Photo Journal</strong>
+            <div class="small">Upload photos and add a caption</div>
+          </div>
+        </div>
+        <div>
+          <input id="photoInput" type="file" accept="image/*" />
+          <label for="photoCaption" style="margin-top:8px">Caption</label>
+          <input id="photoCaption" type="text" placeholder="Write a caption..." />
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="addPhotoBtn">Add Photo</button>
+            <button id="addPhotoTodayBtn" class="ghost">Add & Mark Today</button>
+          </div>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="small">Gallery</div>
+          <div class="small muted">Stored locally on this device</div>
+        </div>
+        <div id="gallery" class="gallery"></div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="card" id="schedulePanel">
+        <div class="panel-title"> <strong>Daily Schedule</strong>
+          <div class="small">Add classes, study time or events</div>
+        </div>
+        <div class="row" style="margin-bottom:8px">
+          <input id="schedTitle" type="text" placeholder="Event title (e.g., Math)" />
+          <input id="schedTime" type="time" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <select id="schedPriority">
+            <option value="normal">Normal</option>
+            <option value="high">High priority</option>
+            <option value="low">Low priority</option>
+          </select>
+          <button id="addSchedBtn">Add to Schedule</button>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+        <ul id="scheduleList" class="list"></ul>
+      </div>
+
+      <!-- To-Do -->
+      <div class="card" id="todoPanel">
+        <div class="panel-title"> <strong>To-Do List</strong>
+          <div class="small">Tasks, priorities and quick check-offs</div>
+        </div>
+        <div class="row">
+          <input id="taskText" type="text" placeholder="New task" />
+          <select id="taskPriority" style="max-width:120px">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="addPhotoBtn">Add Photo</button>
-          <button id="addPhotoTodayBtn" class="ghost">Add & Mark Today</button>
+          <button id="addTaskBtn">Add Task</button>
+          <button id="clearCompletedBtn" class="ghost">Clear Completed</button>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+        <ul id="taskList" class="list"></ul>
+      </div>
+
+      <!-- Mood Tracker -->
+      <div class="card" id="moodPanel">
+        <div class="panel-title"> <strong>Mood Scale</strong>
+          <div class="small">Log your mood each day (emoji + slider)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="mood-emoji" id="moodEmoji">🙂</div>
+          <input id="moodSlider" class="mood-slider" type="range" min="1" max="5" value="3" />
+          <button id="saveMoodBtn">Save Mood</button>
+        </div>
+        <div style="margin-top:8px" class="small muted">Recent moods</div>
+        <ul id="moodList" class="list"></ul>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <aside class="right-col">
+      <!-- Quick Log Today -->
+      <div class="card">
+        <div class="panel-title"> <strong>Quick Log Today</strong>
+          <div class="small">Add a short note that counts toward streak</div>
+        </div>
+        <textarea id="quickNote" placeholder="Write a one-line note about today..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="saveQuickBtn">Save Quick Log</button>
+          <button id="exportBtn" class="ghost">Export JSON</button>
         </div>
       </div>
 
-      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
-
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div class="small">Gallery</div>
-        <div class="small muted">Stored locally on this device</div>
-      </div>
-      <div id="gallery" class="gallery"></div>
-    </div>
-
-    <!-- Schedule -->
-    <div class="card" id="schedulePanel">
-      <div class="panel-title">
-        <strong>Daily Schedule</strong>
-        <div class="small">Add classes, study time or events</div>
-      </div>
-      <div class="row" style="margin-bottom:8px">
-        <input id="schedTitle" type="text" placeholder="Event title (e.g., Math)" />
-        <input id="schedTime" type="time" />
-      </div>
-      <div style="display:flex;gap:8px">
-        <select id="schedPriority">
-          <option value="normal">Normal</option>
-          <option value="high">High priority</option>
-          <option value="low">Low priority</option>
-        </select>
-        <button id="addSchedBtn">Add to Schedule</button>
+      <!-- Memories -->
+      <div class="card">
+        <div class="panel-title"> <strong>Memories</strong>
+          <div class="small">Automatic highlights from your entries</div>
+        </div>
+        <div id="memories" class="memories-list"></div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="regenMemoriesBtn" class="ghost">Refresh Memories</button>
+          <button id="clearAllBtn" class="danger">Clear All Data</button>
+          <a href="projects.html" class="add-memories-btn">Add Memories</a>
+        </div>
       </div>
 
-      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
-      <ul id="scheduleList" class="list"></ul>
-    </div>
-
-    <!-- To-Do -->
-    <div class="card" id="todoPanel">
-      <div class="panel-title">
-        <strong>To-Do List</strong>
-        <div class="small">Tasks, priorities and quick check-offs</div>
+      <!-- Settings (hidden until clicked) -->
+      <div class="card" id="settingsCard" style="display:none">
+        <div class="panel-title"> <strong>Appearance Settings</strong>
+          <div class="small">Customize fonts & colors</div>
+        </div>
+        <div class="settings-grid">
+          <div> <label>Primary color</label> <input type="color" id="primaryColor" value="#5b8def" class="color-swatch" /> </div>
+          <div> <label>Accent color</label> <input type="color" id="accentColor" value="#ffcc00" class="color-swatch" /></div>
+          <div> <label>Background color</label> <input type="color" id="bgColor" value="#f7f9fc" class="color-swatch" /></div>
+          <div> <label>Card color</label> <input type="color" id="cardColor" value="#ffffff" class="color-swatch" /></div>
+          <div> <label>Font family</label>
+            <select id="fontSelect">
+              <option value='"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'>Inter / System</option>
+              <option value='"Roboto", "Helvetica Neue", Arial, sans-serif'>Roboto</option>
+              <option value='"Georgia", serif'>Georgia (serif)</option>
+              <option value='"Comic Sans MS", "Comic Sans", cursive'>Playful (comic)</option>
+              <option value='"Courier New", monospace'>Monospace</option>
+            </select>
+          </div>
+          <div> <label>Base font size</label>
+            <select id="fontSizeSelect">
+              <option value="14px">14px (compact)</option>
+              <option value="16px" selected>16px (default)</option>
+              <option value="18px">18px (large)</option>
+              <option value="20px">20px (extra)</option>
+            </select>
+          </div>
+          <div class="footer">Changes are saved automatically for this browser.</div>
+        </div>
       </div>
-      <div class="row">
-        <input id="taskText" type="text" placeholder="New task" />
-        <select id="taskPriority" style="max-width:120px">
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button id="addTaskBtn">Add Task</button>
-        <button id="clearCompletedBtn" class="ghost">Clear Completed</button>
-      </div>
-
-      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
-      <ul id="taskList" class="list"></ul>
-    </div>
-
-    <!-- Mood Tracker -->
-    <div class="card" id="moodPanel">
-      <div class="panel-title">
-        <strong>Mood Scale</strong>
-        <div class="small">Log your mood each day (emoji + slider)</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="mood-emoji" id="moodEmoji">🙂</div>
-        <input id="moodSlider" class="mood-slider" type="range" min="1" max="5" value="3" />
-        <button id="saveMoodBtn">Save Mood</button>
-      </div>
-      <div style="margin-top:8px" class="small muted">Recent moods</div>
-      <ul id="moodList" class="list"></ul>
-    </div>
+    </aside>
   </div>
 
-  <!-- Right column -->
-  <aside class="right-col">
-    <!-- Today / Quick add -->
-    <div class="card">
-      <div class="panel-title">
-        <strong>Quick Log Today</strong>
-        <div class="small">Add a short note that counts toward streak</div>
-      </div>
-      <textarea id="quickNote" placeholder="Write a one-line note about today..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button id="saveQuickBtn">Save Quick Log</button>
-        <button id="exportBtn" class="ghost">Export JSON</button>
-      </div>
-    </div>
-
-    <!-- Memories -->
-    <div class="card">
-      <div class="panel-title">
-        <strong>Memories</strong>
-        <div class="small">Automatic highlights from your entries</div>
-      </div>
-      <div id="memories" class="memories-list"></div>
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button id="regenMemoriesBtn" class="ghost">Refresh Memories</button>
-        <button id="clearAllBtn" class="danger">Clear All Data</button>
-      </div>
-    </div>
-
-    <!-- Settings (hidden until clicked) -->
-    <div class="card" id="settingsCard" style="display:none">
-      <div class="panel-title">
-        <strong>Appearance Settings</strong>
-        <div class="small">Customize fonts & colors</div>
-      </div>
-      <div class="settings-grid">
-        <div>
-          <label>Primary color</label>
-          <input type="color" id="primaryColor" value="#5b8def" class="color-swatch"/>
-        </div>
-        <div>
-          <label>Accent color</label>
-          <input type="color" id="accentColor" value="#ffcc00" class="color-swatch"/>
-        </div>
-        <div>
-          <label>Background color</label>
-          <input type="color" id="bgColor" value="#f7f9fc" class="color-swatch"/>
-        </div>
-        <div>
-          <label>Card color</label>
-          <input type="color" id="cardColor" value="#ffffff" class="color-swatch"/>
-        </div>
-        <div>
-          <label>Font family</label>
-          <select id="fontSelect">
-            <option value='"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'>Inter / System</option>
-            <option value='"Roboto", "Helvetica Neue", Arial, sans-serif'>Roboto</option>
-            <option value='"Georgia", serif'>Georgia (serif)</option>
-            <option value='"Comic Sans MS", "Comic Sans", cursive'>Playful (comic)</option>
-            <option value='"Courier New", monospace'>Monospace</option>
-          </select>
-        </div>
-        <div>
-          <label>Base font size</label>
-          <select id="fontSizeSelect">
-            <option value="14px">14px (compact)</option>
-            <option value="16px" selected>16px (default)</option>
-            <option value="18px">18px (large)</option>
-            <option value="20px">20px (extra)</option>
-          </select>
-        </div>
-        <div class="footer">Changes are saved automatically for this browser.</div>
-      </div>
-    </div>
-  </aside>
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>

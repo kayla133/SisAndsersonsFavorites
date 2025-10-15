@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>Your Memories</title>
+  <script src="config.js"></script>
+
+  <script type="module" defer>
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
+
+    // Initialize Firebase app
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Handle form submission
+    document.getElementById("addMemoryForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const caption = document.getElementById("caption").value.trim();
+      const memory = document.getElementById("memory").value.trim();
+
+      if (!caption || !memory) {
+        alert("Please fill in both fields.");
+        return;
+      }
+
+      try {
+        const docRef = await addDoc(collection(db, "memories"), {
+          caption: caption,
+          memory: memory,
+          createdAt: new Date().toISOString(),
+        });
+        console.log("Memory added with ID: ", docRef.id);
+        alert("Memory added successfully!");
+        document.getElementById("addMemoryForm").reset();
+        fetchMemories();
+      } catch (error) {
+        console.error("Error adding memory: ", error);
+        alert("Error adding memory. Please check the console for details.");
+      }
+    });
+
+    // Display memories
+    const memoriesList = document.getElementById("memoriesList");
+
+    const fetchMemories = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "memories"));
+        memoriesList.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${data.caption}</strong><br>
+            <em>${data.memory}</em><br>
+            <small>${new Date(data.createdAt).toLocaleString()}</small>
+          `;
+          memoriesList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Error fetching memories: ", error);
+      }
+    };
+
+    // Fetch memories when page loads
+    fetchMemories();
+  </script>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <a href="projects.html">Projects - No login</a>
+      <a href="cr.html">Create and Read</a>
+      <a href="crd.html">Create, Read, and Delete</a>
+      <a href="crud.html">Create, Read, Update, and Delete</a>
+    </nav>
+  </header>
+
+  <main id="memories-container">
+    <h1>Add a Memory</h1>
+    <form id="addMemoryForm">
+      <label for="caption">Caption:</label>
+      <input type="text" id="caption" name="caption" placeholder="Enter a short caption..." required><br>
+
+      <label for="memory">Memory:</label>
+      <textarea id="memory" name="memory" placeholder="Write your memory here..." required></textarea><br>
+
+      <button type="submit">Add Memory</button>
+    </form>
+
+    <h2>Saved Memories</h2>
+    <ul id="memoriesList"></ul>
+  </main>
+</body>
+</html>
