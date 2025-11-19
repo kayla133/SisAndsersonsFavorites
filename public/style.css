@@ -63,6 +63,7 @@ h1 {
   border-radius: var(--radius);
   padding: 14px;
   box-shadow: var(--shadow);
+  animation: fadeIn 0.3s ease-out;
 }
 
 .left-col {
@@ -108,6 +109,16 @@ textarea {
   background: #fff;
   box-sizing: border-box;
   font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.15);
 }
 
 textarea {
@@ -132,12 +143,27 @@ button {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 141, 239, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 button.ghost {
   background: transparent;
   color: var(--primary-color);
   border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+button.ghost:hover {
+  background: rgba(91, 141, 239, 0.1);
+  box-shadow: none;
 }
 
 .muted {
@@ -163,6 +189,12 @@ li.item {
   border-radius: 8px;
   border: 1px solid #f0f4fb;
   background: linear-gradient(180deg, #fff, #fbfdff);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+li.item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .item .left {
@@ -186,6 +218,12 @@ li.item {
   border-radius: 10px;
   overflow: hidden;
   position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.photo-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .photo-card img {
@@ -200,6 +238,29 @@ li.item {
   font-size: 0.9rem;
   color: var(--muted-color);
   background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Photo delete button */
+.photo-delete-btn {
+  background: transparent;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.photo-delete-btn:hover {
+  opacity: 1;
+  background: rgba(255, 107, 107, 0.1);
+  transform: none;
+  box-shadow: none;
 }
 
 /* Mood controls */
@@ -215,6 +276,34 @@ li.item {
 
 .mood-slider {
   flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #ff6b6b, #ffcc00, #4cd964);
+  outline: none;
+}
+
+.mood-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--primary-color);
+}
+
+.mood-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--primary-color);
 }
 
 /* Streak */
@@ -227,6 +316,11 @@ li.item {
   background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
   color: white;
   font-weight: 700;
+  transition: transform 0.3s;
+}
+
+.streak:hover {
+  transform: scale(1.05);
 }
 
 /* Settings panel */
@@ -298,6 +392,12 @@ li.item {
   border-radius: 10px;
   background: linear-gradient(180deg, #fff, #f8fbff);
   border: 1px solid #eef6ff;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mem-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .small-actions {
@@ -307,6 +407,10 @@ li.item {
 
 .danger {
   background: #ff6b6b;
+}
+
+.danger:hover {
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
 .add-memories-btn {
@@ -323,11 +427,71 @@ li.item {
 
 .add-memories-btn:hover {
   background: #4a6fd1;
-  /* slightly darker on hover */
 }
 
-.panel-title {
-  display: flex;
-  justify-content: center;
+/* Daily quote */
+.daily-quote {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, var(--primary-color), #7c9ff5);
+  border-radius: var(--radius);
+  color: white;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
 }
 
+.quote-text {
+  font-size: 1.1rem;
+  font-style: italic;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.quote-author {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Export button style */
+.export-btn {
+  background: linear-gradient(135deg, #4cd964, #3cb371);
+}
+
+.export-btn:hover {
+  box-shadow: 0 4px 12px rgba(76, 217, 100, 0.3);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+/* Keyboard shortcut hint */
+.shortcut-hint {
+  font-size: 0.75rem;
+  color: var(--muted-color);
+  opacity: 0.7;
+}
