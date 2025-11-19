@@ -1,26 +1,30 @@
 // ========== DaySpark Main Script ==========
- 
+
 // ========== Data Storage Keys ==========
 const STORAGE_KEYS = {
-  quickLogs: 'dayspark_quickLogs',
   photos: 'dayspark_photos',
-  schedule: 'dayspark_schedule',
   tasks: 'dayspark_tasks',
-  moods: 'dayspark_moods',
   streak: 'dayspark_streak',
   settings: 'dayspark_settings'
 };
- 
+
+// Legacy keys (used directly as strings)
+const LEGACY_KEYS = {
+  notes: 'notes',
+  schedule: 'schedule',
+  moods: 'moods'
+};
+
 // ========== Utility Functions ==========
 function loadData(key) {
   const data = localStorage.getItem(key);
   return data ? JSON.parse(data) : [];
 }
- 
+
 function saveData(key, data) {
   localStorage.setItem(key, JSON.stringify(data));
 }
- 
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
@@ -29,31 +33,31 @@ function formatDate(date) {
     minute: '2-digit'
   });
 }
- 
+
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
- 
+
 // ========== Notes / Thoughts ==========
 const noteInput = document.getElementById("quickNote");
 const addNoteBtn = document.getElementById("addNoteBtn");
 const clearNotesBtn = document.getElementById("clearNotesBtn");
 const notesContainer = document.getElementById("notesContainer");
- 
+
 // Load saved notes on startup
-let notes = JSON.parse(localStorage.getItem("notes") || "[]");
- 
+let notes = JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]");
+
 // Add a new note
 addNoteBtn.addEventListener("click", () => {
   const text = noteInput.value.trim();
   if (!text) return alert("Please write something first.");
- 
+
   const newNote = {
     id: Date.now(),
     text,
     timestamp: new Date().toLocaleString()
   };
- 
+
   notes.unshift(newNote); // newest first
   saveNotes();
   renderNotes();
@@ -61,17 +65,17 @@ addNoteBtn.addEventListener("click", () => {
   updateStreak();
   renderMemories();
 });
- 
+
 // Save notes to localStorage
 function saveNotes() {
-  localStorage.setItem("notes", JSON.stringify(notes));
+  localStorage.setItem(LEGACY_KEYS.notes, JSON.stringify(notes));
 }
- 
+
 // Render notes as sticky cards
 function renderNotes() {
   if (!notesContainer) return;
   notesContainer.innerHTML = "";
- 
+
   notes.forEach(note => {
     const card = document.createElement("div");
     card.className = "note-card";
@@ -83,33 +87,34 @@ function renderNotes() {
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       margin-bottom: 8px;
     `;
- 
+
     card.innerHTML = `
       <div style="font-size:0.95rem;">${note.text}</div>
       <div style="font-size:0.8rem; color:#777; margin-top:6px;">
         ${note.timestamp}
       </div>
     `;
- 
+
     notesContainer.appendChild(card);
   });
 }
- 
+
 // Clear all notes
 clearNotesBtn.addEventListener("click", () => {
   if (!confirm("Delete all notes?")) return;
   notes = [];
   saveNotes();
   renderNotes();
+  renderMemories();
 });
- 
+
 // ========== Photo Journal ==========
 const photoInput = document.getElementById('photoInput');
 const photoCaption = document.getElementById('photoCaption');
 const addPhotoBtn = document.getElementById('addPhotoBtn');
 const addPhotoTodayBtn = document.getElementById('addPhotoTodayBtn');
 const gallery = document.getElementById('gallery');
- 
+
 function addPhoto(markToday = false) {
   const file = photoInput.files[0];
   if (!file) {
@@ -131,6 +136,7 @@ function addPhoto(markToday = false) {
     photoInput.value = '';
     photoCaption.value = '';
     renderGallery();
+    renderMemories();
     
     if (markToday) {
       updateStreak();
@@ -139,10 +145,10 @@ function addPhoto(markToday = false) {
   };
   reader.readAsDataURL(file);
 }
- 
+
 addPhotoBtn.addEventListener('click', () => addPhoto(false));
 addPhotoTodayBtn.addEventListener('click', () => addPhoto(true));
- 
+
 function renderGallery() {
   const photos = loadData(STORAGE_KEYS.photos);
   gallery.innerHTML = '';
@@ -164,8 +170,9 @@ function renderGallery() {
     gallery.innerHTML = '<div class="small muted">No photos yet</div>';
   }
 }
- 
-function deletePhoto(id) {
+
+// Make deletePhoto global for onclick
+window.deletePhoto = function(id) {
   if (confirm('Delete this photo?')) {
     let photos = loadData(STORAGE_KEYS.photos);
     photos = photos.filter(photo => photo.id !== id);
@@ -174,7 +181,7 @@ function deletePhoto(id) {
     renderMemories();
   }
 }
- 
+
 // ========== Daily Schedule ==========
 // Format time to 12-hour (AM/PM)
 function formatTimeTo12Hour(time) {
@@ -184,16 +191,16 @@ function formatTimeTo12Hour(time) {
   hour = hour % 12 || 12;
   return `${hour}:${minute} ${ampm}`;
 }
- 
+
 const schedTitle = document.getElementById("schedTitle");
 const schedTime = document.getElementById("schedTime");
 const schedPriority = document.getElementById("schedPriority");
 const addSchedBtn = document.getElementById("addSchedBtn");
 const scheduleList = document.getElementById("scheduleList");
- 
+
 // Load existing schedule from localStorage
-let schedule = JSON.parse(localStorage.getItem("schedule")) || [];
- 
+let schedule = JSON.parse(localStorage.getItem(LEGACY_KEYS.schedule) || "[]");
+
 // Render items on page
 function renderSchedule() {
   scheduleList.innerHTML = "";
@@ -202,11 +209,15 @@ function renderSchedule() {
     li.className = "item";
     li.innerHTML = `
       <div class="left">
-        <strong>${item.title}</strong>
-        <span class="time">${formatTimeTo12Hour(item.time)}</span>
-        <span class="badge">${item.priority}</span>
+        <span class="${item.done ? 'task-done' : ''}">
+          <strong>${item.title}</strong>
+          <span class="time">${formatTimeTo12Hour(item.time)}</span>
+          <span class="badge">${item.priority}</span>
+        </span>
       </div>
       <div class="right">
+        <button onclick="toggleSchedule(${index})" class="ghost">${item.done ? '↩' : '✓'}</button>
+        <button onclick="editSchedule(${index})" class="ghost">✏️</button>
         <button onclick="deleteSchedule(${index})" class="ghost">❌</button>
       </div>
     `;
@@ -217,14 +228,34 @@ function renderSchedule() {
     scheduleList.innerHTML = '<li class="small muted">No events scheduled</li>';
   }
 }
- 
-// Delete schedule item
-window.deleteSchedule = (index) => {
-  schedule.splice(index, 1);
-  localStorage.setItem("schedule", JSON.stringify(schedule));
+
+// Toggle schedule item completion
+window.toggleSchedule = function(index) {
+  schedule[index].done = !schedule[index].done;
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
   renderSchedule();
 };
- 
+
+// Edit schedule item
+window.editSchedule = function(index) {
+  const item = schedule[index];
+  schedTitle.value = item.title;
+  schedTime.value = item.time;
+  schedPriority.value = item.priority;
+  
+  // Remove the item being edited
+  schedule.splice(index, 1);
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
+  renderSchedule();
+};
+
+// Delete schedule item
+window.deleteSchedule = function(index) {
+  schedule.splice(index, 1);
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
+  renderSchedule();
+};
+
 // Add schedule item
 addSchedBtn.addEventListener("click", () => {
   if (!schedTitle.value || !schedTime.value) {
@@ -238,20 +269,20 @@ addSchedBtn.addEventListener("click", () => {
   };
   
   schedule.push(newEvent);
-  localStorage.setItem("schedule", JSON.stringify(schedule));
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
   schedTitle.value = "";
   schedTime.value = "";
   schedPriority.value = "normal";
   renderSchedule();
 });
- 
+
 // ========== To-Do List ==========
 const taskText = document.getElementById('taskText');
 const taskPriority = document.getElementById('taskPriority');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 const taskList = document.getElementById('taskList');
- 
+
 addTaskBtn.addEventListener('click', () => {
   const text = taskText.value.trim();
   if (!text) {
@@ -271,14 +302,14 @@ addTaskBtn.addEventListener('click', () => {
   taskText.value = '';
   renderTasks();
 });
- 
+
 clearCompletedBtn.addEventListener('click', () => {
   let tasks = loadData(STORAGE_KEYS.tasks);
   tasks = tasks.filter(task => !task.done);
   saveData(STORAGE_KEYS.tasks, tasks);
   renderTasks();
 });
- 
+
 function renderTasks() {
   const tasks = loadData(STORAGE_KEYS.tasks);
   taskList.innerHTML = '';
@@ -294,7 +325,7 @@ function renderTasks() {
     const li = document.createElement('li');
     li.className = 'item';
     
-    const priorityBadge = task.priority === 'high' ? '🔴' :
+    const priorityBadge = task.priority === 'high' ? '🔴' : 
                          task.priority === 'low' ? '🟢' : '🟡';
     
     li.innerHTML = `
@@ -303,6 +334,7 @@ function renderTasks() {
       </div>
       <div class="right">
         <button class="ghost" onclick="toggleTask('${task.id}')">${task.done ? '↩' : '✓'}</button>
+        <button class="ghost" onclick="editTask('${task.id}')">✏️</button>
         <button class="ghost" onclick="deleteTask('${task.id}')">✕</button>
       </div>
     `;
@@ -313,8 +345,9 @@ function renderTasks() {
     taskList.innerHTML = '<li class="small muted">No tasks yet</li>';
   }
 }
- 
-function toggleTask(id) {
+
+// Make toggleTask global for onclick
+window.toggleTask = function(id) {
   const tasks = loadData(STORAGE_KEYS.tasks);
   const task = tasks.find(t => t.id === id);
   if (task) {
@@ -323,21 +356,37 @@ function toggleTask(id) {
     renderTasks();
   }
 }
- 
-function deleteTask(id) {
+
+// Make editTask global for onclick
+window.editTask = function(id) {
+  let tasks = loadData(STORAGE_KEYS.tasks);
+  const task = tasks.find(t => t.id === id);
+  if (task) {
+    taskText.value = task.text;
+    taskPriority.value = task.priority;
+    
+    // Remove the task being edited
+    tasks = tasks.filter(t => t.id !== id);
+    saveData(STORAGE_KEYS.tasks, tasks);
+    renderTasks();
+  }
+}
+
+// Make deleteTask global for onclick
+window.deleteTask = function(id) {
   let tasks = loadData(STORAGE_KEYS.tasks);
   tasks = tasks.filter(task => task.id !== id);
   saveData(STORAGE_KEYS.tasks, tasks);
   renderTasks();
 }
- 
+
 // ========== Mood Tracker (with delete options) ==========
 const moodSlider = document.getElementById("moodSlider");
 const moodEmoji = document.getElementById("moodEmoji");
 const saveMoodBtn = document.getElementById("saveMoodBtn");
 const moodList = document.getElementById("moodList");
 const clearMoodsBtn = document.getElementById("clearMoodsBtn");
- 
+
 // Emoji map
 const moodFaces = {
   1: "😢",
@@ -346,7 +395,7 @@ const moodFaces = {
   4: "🙂",
   5: "😁"
 };
- 
+
 // Word descriptions
 const moodWords = {
   1: "Very Bad",
@@ -355,21 +404,21 @@ const moodWords = {
   4: "Good",
   5: "Great"
 };
- 
+
 // Load saved moods
-let moods = JSON.parse(localStorage.getItem("moods") || "[]");
- 
+let moods = JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]");
+
 // Slider emoji updater
 moodSlider.addEventListener("input", () => {
   const val = Number(moodSlider.value);
   moodEmoji.textContent = moodFaces[val];
 });
- 
+
 // Save a mood entry
 saveMoodBtn.addEventListener("click", () => {
   let value = Number(moodSlider.value);
   if (value < 1 || value > 5) value = 3;
- 
+
   const newMood = {
     id: Date.now(),
     mood: value,
@@ -377,26 +426,27 @@ saveMoodBtn.addEventListener("click", () => {
     word: moodWords[value],
     timestamp: new Date().toLocaleString()
   };
- 
+
   moods.unshift(newMood);
   saveMoods();
   renderMoods();
+  renderMemories();
   updateStreak();
 });
- 
+
 // Save moods to localStorage
 function saveMoods() {
-  localStorage.setItem("moods", JSON.stringify(moods));
+  localStorage.setItem(LEGACY_KEYS.moods, JSON.stringify(moods));
 }
- 
+
 // Render list (with delete buttons)
 function renderMoods() {
   moodList.innerHTML = "";
- 
+
   moods.forEach(entry => {
     const li = document.createElement("li");
     li.className = "item";
- 
+
     li.innerHTML = `
       <div class="left" style="display:flex; align-items:center; gap:10px;">
         <span style="font-size:1.3rem">${entry.emoji}</span>
@@ -407,17 +457,17 @@ function renderMoods() {
         <button class="deleteMoodBtn" data-id="${entry.id}" style="background:#ff6b6b; padding:4px 8px;">X</button>
       </div>
     `;
- 
+
     moodList.appendChild(li);
   });
- 
+
   if (moods.length === 0) {
     moodList.innerHTML = '<li class="small muted">No moods recorded</li>';
   }
- 
+
   bindMoodDeleteButtons();
 }
- 
+
 // Attach delete handlers
 function bindMoodDeleteButtons() {
   document.querySelectorAll(".deleteMoodBtn").forEach(btn => {
@@ -426,24 +476,26 @@ function bindMoodDeleteButtons() {
       moods = moods.filter(m => m.id !== id);
       saveMoods();
       renderMoods();
+      renderMemories();
     });
   });
 }
- 
+
 // Clear ALL mood entries
 if (clearMoodsBtn) {
   clearMoodsBtn.addEventListener("click", () => {
     if (!confirm("Delete ALL saved moods?")) return;
- 
+
     moods = [];
     saveMoods();
     renderMoods();
+    renderMemories();
   });
 }
- 
+
 // ========== Streak Counter ==========
 const streakCount = document.getElementById('streakCount');
- 
+
 function updateStreak() {
   const streakData = JSON.parse(localStorage.getItem(STORAGE_KEYS.streak)) || {
     count: 0,
@@ -474,7 +526,7 @@ function updateStreak() {
   localStorage.setItem(STORAGE_KEYS.streak, JSON.stringify(streakData));
   streakCount.textContent = streakData.count;
 }
- 
+
 function loadStreak() {
   const streakData = JSON.parse(localStorage.getItem(STORAGE_KEYS.streak)) || {
     count: 0,
@@ -482,16 +534,16 @@ function loadStreak() {
   };
   streakCount.textContent = streakData.count;
 }
- 
+
 // ========== Memories ==========
 const memories = document.getElementById('memories');
 const regenMemoriesBtn = document.getElementById('regenMemoriesBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
- 
+
 function renderMemories() {
-  const savedNotes = JSON.parse(localStorage.getItem("notes") || "[]");
+  const savedNotes = JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]");
   const photos = loadData(STORAGE_KEYS.photos);
-  const moods = loadData(STORAGE_KEYS.moods);
+  const savedMoods = JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]");
   
   memories.innerHTML = '';
   
@@ -507,10 +559,10 @@ function renderMemories() {
       text: photo.caption,
       date: photo.date
     })),
-    ...moods.map(mood => ({
+    ...savedMoods.map(mood => ({
       type: 'mood',
       text: `Felt ${mood.emoji}`,
-      date: mood.date
+      date: mood.timestamp ? new Date(mood.timestamp).toISOString() : new Date(mood.id).toISOString()
     }))
   ];
   
@@ -522,7 +574,7 @@ function renderMemories() {
     const card = document.createElement('div');
     card.className = 'mem-card';
     
-    const icon = mem.type === 'note' ? '📝' :
+    const icon = mem.type === 'note' ? '📝' : 
                  mem.type === 'photo' ? '📷' : '😊';
     
     card.innerHTML = `
@@ -537,18 +589,23 @@ function renderMemories() {
     memories.innerHTML = '<div class="small muted">No memories yet. Start journaling!</div>';
   }
 }
- 
+
 regenMemoriesBtn.addEventListener('click', renderMemories);
- 
+
 clearAllBtn.addEventListener('click', () => {
   if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+    // Clear all STORAGE_KEYS
     Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+    // Also clear legacy keys
+    Object.values(LEGACY_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
     location.reload();
   }
 });
- 
+
 // ========== Settings ==========
 const openSettingsBtn = document.getElementById('openSettingsBtn');
 const settingsCard = document.getElementById('settingsCard');
@@ -558,11 +615,11 @@ const bgColor = document.getElementById('bgColor');
 const cardColor = document.getElementById('cardColor');
 const fontSelect = document.getElementById('fontSelect');
 const fontSizeSelect = document.getElementById('fontSizeSelect');
- 
+
 openSettingsBtn.addEventListener('click', () => {
   settingsCard.style.display = settingsCard.style.display === 'none' ? 'block' : 'none';
 });
- 
+
 function applySettings() {
   document.documentElement.style.setProperty('--primary-color', primaryColor.value);
   document.documentElement.style.setProperty('--accent-color', accentColor.value);
@@ -582,7 +639,7 @@ function applySettings() {
   };
   saveData(STORAGE_KEYS.settings, settings);
 }
- 
+
 function loadSettings() {
   const settings = localStorage.getItem(STORAGE_KEYS.settings);
   if (settings) {
@@ -596,12 +653,12 @@ function loadSettings() {
     applySettings();
   }
 }
- 
+
 // Add event listeners to all settings inputs
 [primaryColor, accentColor, bgColor, cardColor, fontSelect, fontSizeSelect].forEach(input => {
   input.addEventListener('change', applySettings);
 });
- 
+
 // ========== Initialize ==========
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
@@ -612,42 +669,16 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMoods();
   renderNotes();
   renderMemories();
-  initKeyboardShortcuts();
 });
- 
-// ========== Keyboard Shortcuts ==========
-function initKeyboardShortcuts() {
-  document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + S to save quick log
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
-      if (document.activeElement === quickNote && quickNote.value.trim()) {
-        saveQuickBtn.click();
-      }
-    }
-    
-    // Ctrl/Cmd + Enter to add task (when focused on task input)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      if (document.activeElement === taskText && taskText.value.trim()) {
-        addTaskBtn.click();
-      }
-    }
-    
-    // Escape to close settings
-    if (e.key === 'Escape') {
-      settingsCard.style.display = 'none';
-    }
-  });
-}
- 
+
 // ========== Export Data ==========
 function exportData() {
   const data = {
-    quickLogs: loadData(STORAGE_KEYS.quickLogs),
+    notes: JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]"),
     photos: loadData(STORAGE_KEYS.photos),
-    schedule: loadData(STORAGE_KEYS.schedule),
+    schedule: JSON.parse(localStorage.getItem(LEGACY_KEYS.schedule) || "[]"),
     tasks: loadData(STORAGE_KEYS.tasks),
-    moods: loadData(STORAGE_KEYS.moods),
+    moods: JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]"),
     exportDate: new Date().toISOString()
   };
   
@@ -659,59 +690,17 @@ function exportData() {
   a.click();
   URL.revokeObjectURL(url);
 }
- 
-// ========== Task Search/Filter ==========
-function filterTasks(searchTerm) {
-  const tasks = loadData(STORAGE_KEYS.tasks);
-  const filtered = tasks.filter(task =>
-    task.text.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  renderFilteredTasks(filtered);
-}
- 
-function renderFilteredTasks(tasks) {
-  taskList.innerHTML = '';
-  
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
-  tasks.sort((a, b) => {
-    if (a.done !== b.done) return a.done ? 1 : -1;
-    return priorityOrder[a.priority] - priorityOrder[b.priority];
-  });
-  
-  tasks.forEach(task => {
-    const li = document.createElement('li');
-    li.className = 'item';
-    
-    const priorityBadge = task.priority === 'high' ? '🔴' :
-                         task.priority === 'low' ? '🟢' : '🟡';
-    
-    li.innerHTML = `
-      <div class="left">
-        <span class="${task.done ? 'task-done' : ''}">${priorityBadge} ${task.text}</span>
-      </div>
-      <div class="right">
-        <button class="ghost" onclick="toggleTask('${task.id}')">${task.done ? '↩' : '✓'}</button>
-        <button class="ghost" onclick="deleteTask('${task.id}')">✕</button>
-      </div>
-    `;
-    taskList.appendChild(li);
-  });
-  
-  if (tasks.length === 0) {
-    taskList.innerHTML = '<li class="small muted">No tasks found</li>';
-  }
-}
- 
+
 // ========== Statistics ==========
 function getStats() {
   const tasks = loadData(STORAGE_KEYS.tasks);
-  const moods = loadData(STORAGE_KEYS.moods);
+  const savedMoods = JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]");
   const photos = loadData(STORAGE_KEYS.photos);
-  const logs = loadData(STORAGE_KEYS.quickLogs);
+  const savedNotes = JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]");
   
   const completedTasks = tasks.filter(t => t.done).length;
-  const avgMood = moods.length > 0
-    ? (moods.reduce((sum, m) => sum + m.value, 0) / moods.length).toFixed(1)
+  const avgMood = savedMoods.length > 0 
+    ? (savedMoods.reduce((sum, m) => sum + m.mood, 0) / savedMoods.length).toFixed(1)
     : 0;
   
   return {
@@ -719,8 +708,8 @@ function getStats() {
     completedTasks: completedTasks,
     completionRate: tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0,
     totalPhotos: photos.length,
-    totalLogs: logs.length,
+    totalNotes: savedNotes.length,
     avgMood: avgMood,
-    totalEntries: photos.length + logs.length + moods.length
+    totalEntries: photos.length + savedNotes.length + savedMoods.length
   };
 }
