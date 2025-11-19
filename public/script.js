@@ -34,28 +34,73 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// ========== Quick Log ==========
-const quickNote = document.getElementById('quickNote');
-const saveQuickBtn = document.getElementById('saveQuickBtn');
+// ========== Notes / Thoughts ==========
+const noteInput = document.getElementById("quickNote");
+const addNoteBtn = document.getElementById("addNoteBtn");
+const clearNotesBtn = document.getElementById("clearNotesBtn");
+const notesContainer = document.getElementById("notesContainer");
 
-saveQuickBtn.addEventListener('click', () => {
-  const text = quickNote.value.trim();
-  if (!text) {
-    alert('Please write something first!');
-    return;
-  }
-  
-  const logs = loadData(STORAGE_KEYS.quickLogs);
-  logs.unshift({
-    id: generateId(),
-    text: text,
-    date: new Date().toISOString()
-  });
-  saveData(STORAGE_KEYS.quickLogs, logs);
-  quickNote.value = '';
+// Load saved notes on startup
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+
+// Add a new note
+addNoteBtn.addEventListener("click", () => {
+  const text = noteInput.value.trim();
+  if (!text) return alert("Please write something first.");
+
+  const newNote = {
+    id: Date.now(),
+    text,
+    timestamp: new Date().toLocaleString()
+  };
+
+  notes.unshift(newNote); // newest first
+  saveNotes();
+  renderNotes();
+  noteInput.value = "";
   updateStreak();
   renderMemories();
-  alert('Quick log saved!');
+});
+
+// Save notes to localStorage
+function saveNotes() {
+  localStorage.setItem("notes", JSON.stringify(notes));
+}
+
+// Render notes as sticky cards
+function renderNotes() {
+  if (!notesContainer) return;
+  notesContainer.innerHTML = "";
+
+  notes.forEach(note => {
+    const card = document.createElement("div");
+    card.className = "note-card";
+    card.style.cssText = `
+      background: #fff8c6;
+      border: 1px solid #f0e6a8;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 8px;
+    `;
+
+    card.innerHTML = `
+      <div style="font-size:0.95rem;">${note.text}</div>
+      <div style="font-size:0.8rem; color:#777; margin-top:6px;">
+        ${note.timestamp}
+      </div>
+    `;
+
+    notesContainer.appendChild(card);
+  });
+}
+
+// Clear all notes
+clearNotesBtn.addEventListener("click", () => {
+  if (!confirm("Delete all notes?")) return;
+  notes = [];
+  saveNotes();
+  renderNotes();
 });
 
 // ========== Photo Journal ==========
@@ -107,7 +152,10 @@ function renderGallery() {
     card.className = 'photo-card';
     card.innerHTML = `
       <img src="${photo.src}" alt="${photo.caption}">
-      <div class="caption">${photo.caption}</div>
+      <div class="caption">
+        <span>${photo.caption}</span>
+        <button class="photo-delete-btn" onclick="deletePhoto('${photo.id}')" title="Delete photo">✕</button>
+      </div>
     `;
     gallery.appendChild(card);
   });
@@ -117,84 +165,85 @@ function renderGallery() {
   }
 }
 
-// ========== Daily Schedule ==========
-const schedTitle = document.getElementById('schedTitle');
-const schedTime = document.getElementById('schedTime');
-const schedPriority = document.getElementById('schedPriority');
-const addSchedBtn = document.getElementById('addSchedBtn');
-const scheduleList = document.getElementById('scheduleList');
-
-addSchedBtn.addEventListener('click', () => {
-  const title = schedTitle.value.trim();
-  const time = schedTime.value;
-  
-  if (!title) {
-    alert('Please enter an event title!');
-    return;
+function deletePhoto(id) {
+  if (confirm('Delete this photo?')) {
+    let photos = loadData(STORAGE_KEYS.photos);
+    photos = photos.filter(photo => photo.id !== id);
+    saveData(STORAGE_KEYS.photos, photos);
+    renderGallery();
+    renderMemories();
   }
-  
-  const schedule = loadData(STORAGE_KEYS.schedule);
-  schedule.push({
-    id: generateId(),
-    title: title,
-    time: time || 'No time set',
-    priority: schedPriority.value,
-    date: new Date().toISOString()
-  });
-  
-  // Sort by time
-  schedule.sort((a, b) => {
-    if (a.time === 'No time set') return 1;
-    if (b.time === 'No time set') return -1;
-    return a.time.localeCompare(b.time);
-  });
-  
-  saveData(STORAGE_KEYS.schedule, schedule);
-  schedTitle.value = '';
-  schedTime.value = '';
-  renderSchedule();
-});
+}
 
+// ========== Daily Schedule ==========
+// Format time to 12-hour (AM/PM)
+function formatTimeTo12Hour(time) {
+  const [hourStr, minute] = time.split(":");
+  let hour = parseInt(hourStr);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute} ${ampm}`;
+}
+
+const schedTitle = document.getElementById("schedTitle");
+const schedTime = document.getElementById("schedTime");
+const schedPriority = document.getElementById("schedPriority");
+const addSchedBtn = document.getElementById("addSchedBtn");
+const scheduleList = document.getElementById("scheduleList");
+
+// Load existing schedule from localStorage
+let schedule = JSON.parse(localStorage.getItem("schedule")) || [];
+
+// Render items on page
 function renderSchedule() {
-  const schedule = loadData(STORAGE_KEYS.schedule);
-  scheduleList.innerHTML = '';
-  
-  // Filter for today's events
-  const today = new Date().toDateString();
-  const todayEvents = schedule.filter(event => 
-    new Date(event.date).toDateString() === today
-  );
-  
-  todayEvents.forEach(event => {
-    const li = document.createElement('li');
-    li.className = 'item';
-    
-    const priorityBadge = event.priority === 'high' ? '🔴' : 
-                         event.priority === 'low' ? '🟢' : '🟡';
-    
+  scheduleList.innerHTML = "";
+  schedule.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.className = "item";
     li.innerHTML = `
       <div class="left">
-        <strong>${priorityBadge} ${event.title}</strong>
-        <div class="time">${event.time}</div>
+        <strong>${item.title}</strong>
+        <span class="time">${formatTimeTo12Hour(item.time)}</span>
+        <span class="badge">${item.priority}</span>
       </div>
       <div class="right">
-        <button class="ghost" onclick="deleteScheduleItem('${event.id}')">✕</button>
+        <button onclick="deleteSchedule(${index})" class="ghost">❌</button>
       </div>
     `;
     scheduleList.appendChild(li);
   });
   
-  if (todayEvents.length === 0) {
-    scheduleList.innerHTML = '<li class="small muted">No events scheduled for today</li>';
+  if (schedule.length === 0) {
+    scheduleList.innerHTML = '<li class="small muted">No events scheduled</li>';
   }
 }
 
-function deleteScheduleItem(id) {
-  let schedule = loadData(STORAGE_KEYS.schedule);
-  schedule = schedule.filter(item => item.id !== id);
-  saveData(STORAGE_KEYS.schedule, schedule);
+// Delete schedule item
+window.deleteSchedule = (index) => {
+  schedule.splice(index, 1);
+  localStorage.setItem("schedule", JSON.stringify(schedule));
   renderSchedule();
-}
+};
+
+// Add schedule item
+addSchedBtn.addEventListener("click", () => {
+  if (!schedTitle.value || !schedTime.value) {
+    return alert("Please enter a title and time for the event.");
+  }
+  
+  const newEvent = {
+    title: schedTitle.value,
+    time: schedTime.value,
+    priority: schedPriority.value
+  };
+  
+  schedule.push(newEvent);
+  localStorage.setItem("schedule", JSON.stringify(schedule));
+  schedTitle.value = "";
+  schedTime.value = "";
+  schedPriority.value = "normal";
+  renderSchedule();
+});
 
 // ========== To-Do List ==========
 const taskText = document.getElementById('taskText');
@@ -282,51 +331,114 @@ function deleteTask(id) {
   renderTasks();
 }
 
-// ========== Mood Tracker ==========
-const moodSlider = document.getElementById('moodSlider');
-const moodEmoji = document.getElementById('moodEmoji');
-const saveMoodBtn = document.getElementById('saveMoodBtn');
-const moodList = document.getElementById('moodList');
+// ========== Mood Tracker (with delete options) ==========
+const moodSlider = document.getElementById("moodSlider");
+const moodEmoji = document.getElementById("moodEmoji");
+const saveMoodBtn = document.getElementById("saveMoodBtn");
+const moodList = document.getElementById("moodList");
+const clearMoodsBtn = document.getElementById("clearMoodsBtn");
 
-const moodEmojis = ['😢', '😕', '🙂', '😊', '😄'];
+// Emoji map
+const moodFaces = {
+  1: "😢",
+  2: "☹️",
+  3: "😐",
+  4: "🙂",
+  5: "😁"
+};
 
-moodSlider.addEventListener('input', () => {
-  moodEmoji.textContent = moodEmojis[moodSlider.value - 1];
+// Word descriptions
+const moodWords = {
+  1: "Very Bad",
+  2: "Bad",
+  3: "Neutral",
+  4: "Good",
+  5: "Great"
+};
+
+// Load saved moods
+let moods = JSON.parse(localStorage.getItem("moods") || "[]");
+
+// Slider emoji updater
+moodSlider.addEventListener("input", () => {
+  const val = Number(moodSlider.value);
+  moodEmoji.textContent = moodFaces[val];
 });
 
-saveMoodBtn.addEventListener('click', () => {
-  const moods = loadData(STORAGE_KEYS.moods);
-  moods.unshift({
-    id: generateId(),
-    value: parseInt(moodSlider.value),
-    emoji: moodEmojis[moodSlider.value - 1],
-    date: new Date().toISOString()
-  });
-  saveData(STORAGE_KEYS.moods, moods);
-  updateStreak();
+// Save a mood entry
+saveMoodBtn.addEventListener("click", () => {
+  let value = Number(moodSlider.value);
+  if (value < 1 || value > 5) value = 3;
+
+  const newMood = {
+    id: Date.now(),
+    mood: value,
+    emoji: moodFaces[value],
+    word: moodWords[value],
+    timestamp: new Date().toLocaleString()
+  };
+
+  moods.unshift(newMood);
+  saveMoods();
   renderMoods();
-  alert('Mood saved!');
+  updateStreak();
 });
 
+// Save moods to localStorage
+function saveMoods() {
+  localStorage.setItem("moods", JSON.stringify(moods));
+}
+
+// Render list (with delete buttons)
 function renderMoods() {
-  const moods = loadData(STORAGE_KEYS.moods);
-  moodList.innerHTML = '';
-  
-  moods.slice(0, 5).forEach(mood => {
-    const li = document.createElement('li');
-    li.className = 'item';
+  moodList.innerHTML = "";
+
+  moods.forEach(entry => {
+    const li = document.createElement("li");
+    li.className = "item";
+
     li.innerHTML = `
-      <div class="left">
-        <span>${mood.emoji} Level ${mood.value}</span>
-        <div class="time">${formatDate(mood.date)}</div>
+      <div class="left" style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.3rem">${entry.emoji}</span>
+        <strong>${entry.word}</strong>
+      </div>
+      <div class="right" style="display:flex; gap:8px; align-items:center;">
+        <span class="time">${entry.timestamp}</span>
+        <button class="deleteMoodBtn" data-id="${entry.id}" style="background:#ff6b6b; padding:4px 8px;">X</button>
       </div>
     `;
+
     moodList.appendChild(li);
   });
-  
+
   if (moods.length === 0) {
     moodList.innerHTML = '<li class="small muted">No moods recorded</li>';
   }
+
+  bindMoodDeleteButtons();
+}
+
+// Attach delete handlers
+function bindMoodDeleteButtons() {
+  document.querySelectorAll(".deleteMoodBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = Number(btn.getAttribute("data-id"));
+      moods = moods.filter(m => m.id !== id);
+      saveMoods();
+      renderMoods();
+    });
+  });
+}
+
+// Clear ALL mood entries
+if (clearMoodsBtn) {
+  clearMoodsBtn.addEventListener("click", () => {
+    if (!confirm("Delete ALL saved moods?")) return;
+
+    moods = [];
+    saveMoods();
+    renderMoods();
+  });
 }
 
 // ========== Streak Counter ==========
@@ -377,7 +489,7 @@ const regenMemoriesBtn = document.getElementById('regenMemoriesBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 
 function renderMemories() {
-  const quickLogs = loadData(STORAGE_KEYS.quickLogs);
+  const savedNotes = JSON.parse(localStorage.getItem("notes") || "[]");
   const photos = loadData(STORAGE_KEYS.photos);
   const moods = loadData(STORAGE_KEYS.moods);
   
@@ -385,10 +497,10 @@ function renderMemories() {
   
   // Combine all memories
   const allMemories = [
-    ...quickLogs.map(log => ({
-      type: 'log',
-      text: log.text,
-      date: log.date
+    ...savedNotes.map(note => ({
+      type: 'note',
+      text: note.text,
+      date: new Date(note.id).toISOString()
     })),
     ...photos.map(photo => ({
       type: 'photo',
@@ -410,7 +522,7 @@ function renderMemories() {
     const card = document.createElement('div');
     card.className = 'mem-card';
     
-    const icon = mem.type === 'log' ? '📝' : 
+    const icon = mem.type === 'note' ? '📝' : 
                  mem.type === 'photo' ? '📷' : '😊';
     
     card.innerHTML = `
@@ -498,5 +610,117 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSchedule();
   renderTasks();
   renderMoods();
+  renderNotes();
   renderMemories();
+  initKeyboardShortcuts();
 });
+
+// ========== Keyboard Shortcuts ==========
+function initKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + S to save quick log
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (document.activeElement === quickNote && quickNote.value.trim()) {
+        saveQuickBtn.click();
+      }
+    }
+    
+    // Ctrl/Cmd + Enter to add task (when focused on task input)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (document.activeElement === taskText && taskText.value.trim()) {
+        addTaskBtn.click();
+      }
+    }
+    
+    // Escape to close settings
+    if (e.key === 'Escape') {
+      settingsCard.style.display = 'none';
+    }
+  });
+}
+
+// ========== Export Data ==========
+function exportData() {
+  const data = {
+    quickLogs: loadData(STORAGE_KEYS.quickLogs),
+    photos: loadData(STORAGE_KEYS.photos),
+    schedule: loadData(STORAGE_KEYS.schedule),
+    tasks: loadData(STORAGE_KEYS.tasks),
+    moods: loadData(STORAGE_KEYS.moods),
+    exportDate: new Date().toISOString()
+  };
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dayspark-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== Task Search/Filter ==========
+function filterTasks(searchTerm) {
+  const tasks = loadData(STORAGE_KEYS.tasks);
+  const filtered = tasks.filter(task => 
+    task.text.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  renderFilteredTasks(filtered);
+}
+
+function renderFilteredTasks(tasks) {
+  taskList.innerHTML = '';
+  
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+  tasks.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  });
+  
+  tasks.forEach(task => {
+    const li = document.createElement('li');
+    li.className = 'item';
+    
+    const priorityBadge = task.priority === 'high' ? '🔴' : 
+                         task.priority === 'low' ? '🟢' : '🟡';
+    
+    li.innerHTML = `
+      <div class="left">
+        <span class="${task.done ? 'task-done' : ''}">${priorityBadge} ${task.text}</span>
+      </div>
+      <div class="right">
+        <button class="ghost" onclick="toggleTask('${task.id}')">${task.done ? '↩' : '✓'}</button>
+        <button class="ghost" onclick="deleteTask('${task.id}')">✕</button>
+      </div>
+    `;
+    taskList.appendChild(li);
+  });
+  
+  if (tasks.length === 0) {
+    taskList.innerHTML = '<li class="small muted">No tasks found</li>';
+  }
+}
+
+// ========== Statistics ==========
+function getStats() {
+  const tasks = loadData(STORAGE_KEYS.tasks);
+  const moods = loadData(STORAGE_KEYS.moods);
+  const photos = loadData(STORAGE_KEYS.photos);
+  const logs = loadData(STORAGE_KEYS.quickLogs);
+  
+  const completedTasks = tasks.filter(t => t.done).length;
+  const avgMood = moods.length > 0 
+    ? (moods.reduce((sum, m) => sum + m.value, 0) / moods.length).toFixed(1)
+    : 0;
+  
+  return {
+    totalTasks: tasks.length,
+    completedTasks: completedTasks,
+    completionRate: tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0,
+    totalPhotos: photos.length,
+    totalLogs: logs.length,
+    avgMood: avgMood,
+    totalEntries: photos.length + logs.length + moods.length
+  };
+}

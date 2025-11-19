@@ -104,20 +104,26 @@
         </div>
         <div style="margin-top:8px" class="small muted">Recent moods</div>
         <ul id="moodList" class="list"></ul>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button id="clearMoodsBtn" class="danger">Clear All Moods</button>
+        </div>
       </div>
     </div>
 
     <!-- Right column -->
     <aside class="right-col">
-      <!-- Quick Log Today -->
+      <!-- Notes/Thoughts -->
       <div class="card">
         <div class="panel-title">
-          <h3>Quick Log Today</h3>
+          <h3>Notes/Thoughts</h3>
         </div>
-        <textarea id="quickNote" placeholder="Write a one-line note about today..."></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="saveQuickBtn">Save Quick Log</button>
+        <textarea id="quickNote" placeholder="Write a quick note..."></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <button id="addNoteBtn">Add Note</button>
+          <button id="clearNotesBtn" class="ghost">Clear Entries</button>
         </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
+        <div id="notesContainer"></div>
       </div>
 
       <!-- Memories -->
