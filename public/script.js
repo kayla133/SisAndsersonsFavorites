@@ -1,5 +1,5 @@
 // ========== DaySpark Main Script ==========
-
+ 
 // ========== Data Storage Keys ==========
 const STORAGE_KEYS = {
   quickLogs: 'dayspark_quickLogs',
@@ -10,17 +10,17 @@ const STORAGE_KEYS = {
   streak: 'dayspark_streak',
   settings: 'dayspark_settings'
 };
-
+ 
 // ========== Utility Functions ==========
 function loadData(key) {
   const data = localStorage.getItem(key);
   return data ? JSON.parse(data) : [];
 }
-
+ 
 function saveData(key, data) {
   localStorage.setItem(key, JSON.stringify(data));
 }
-
+ 
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
@@ -29,31 +29,31 @@ function formatDate(date) {
     minute: '2-digit'
   });
 }
-
+ 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
-
+ 
 // ========== Notes / Thoughts ==========
 const noteInput = document.getElementById("quickNote");
 const addNoteBtn = document.getElementById("addNoteBtn");
 const clearNotesBtn = document.getElementById("clearNotesBtn");
 const notesContainer = document.getElementById("notesContainer");
-
+ 
 // Load saved notes on startup
 let notes = JSON.parse(localStorage.getItem("notes") || "[]");
-
+ 
 // Add a new note
 addNoteBtn.addEventListener("click", () => {
   const text = noteInput.value.trim();
   if (!text) return alert("Please write something first.");
-
+ 
   const newNote = {
     id: Date.now(),
     text,
     timestamp: new Date().toLocaleString()
   };
-
+ 
   notes.unshift(newNote); // newest first
   saveNotes();
   renderNotes();
@@ -61,17 +61,17 @@ addNoteBtn.addEventListener("click", () => {
   updateStreak();
   renderMemories();
 });
-
+ 
 // Save notes to localStorage
 function saveNotes() {
   localStorage.setItem("notes", JSON.stringify(notes));
 }
-
+ 
 // Render notes as sticky cards
 function renderNotes() {
   if (!notesContainer) return;
   notesContainer.innerHTML = "";
-
+ 
   notes.forEach(note => {
     const card = document.createElement("div");
     card.className = "note-card";
@@ -83,18 +83,18 @@ function renderNotes() {
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       margin-bottom: 8px;
     `;
-
+ 
     card.innerHTML = `
       <div style="font-size:0.95rem;">${note.text}</div>
       <div style="font-size:0.8rem; color:#777; margin-top:6px;">
         ${note.timestamp}
       </div>
     `;
-
+ 
     notesContainer.appendChild(card);
   });
 }
-
+ 
 // Clear all notes
 clearNotesBtn.addEventListener("click", () => {
   if (!confirm("Delete all notes?")) return;
@@ -102,14 +102,14 @@ clearNotesBtn.addEventListener("click", () => {
   saveNotes();
   renderNotes();
 });
-
+ 
 // ========== Photo Journal ==========
 const photoInput = document.getElementById('photoInput');
 const photoCaption = document.getElementById('photoCaption');
 const addPhotoBtn = document.getElementById('addPhotoBtn');
 const addPhotoTodayBtn = document.getElementById('addPhotoTodayBtn');
 const gallery = document.getElementById('gallery');
-
+ 
 function addPhoto(markToday = false) {
   const file = photoInput.files[0];
   if (!file) {
@@ -139,10 +139,10 @@ function addPhoto(markToday = false) {
   };
   reader.readAsDataURL(file);
 }
-
+ 
 addPhotoBtn.addEventListener('click', () => addPhoto(false));
 addPhotoTodayBtn.addEventListener('click', () => addPhoto(true));
-
+ 
 function renderGallery() {
   const photos = loadData(STORAGE_KEYS.photos);
   gallery.innerHTML = '';
@@ -164,7 +164,7 @@ function renderGallery() {
     gallery.innerHTML = '<div class="small muted">No photos yet</div>';
   }
 }
-
+ 
 function deletePhoto(id) {
   if (confirm('Delete this photo?')) {
     let photos = loadData(STORAGE_KEYS.photos);
@@ -174,7 +174,7 @@ function deletePhoto(id) {
     renderMemories();
   }
 }
-
+ 
 // ========== Daily Schedule ==========
 // Format time to 12-hour (AM/PM)
 function formatTimeTo12Hour(time) {
@@ -184,16 +184,16 @@ function formatTimeTo12Hour(time) {
   hour = hour % 12 || 12;
   return `${hour}:${minute} ${ampm}`;
 }
-
+ 
 const schedTitle = document.getElementById("schedTitle");
 const schedTime = document.getElementById("schedTime");
 const schedPriority = document.getElementById("schedPriority");
 const addSchedBtn = document.getElementById("addSchedBtn");
 const scheduleList = document.getElementById("scheduleList");
-
+ 
 // Load existing schedule from localStorage
 let schedule = JSON.parse(localStorage.getItem("schedule")) || [];
-
+ 
 // Render items on page
 function renderSchedule() {
   scheduleList.innerHTML = "";
@@ -217,14 +217,14 @@ function renderSchedule() {
     scheduleList.innerHTML = '<li class="small muted">No events scheduled</li>';
   }
 }
-
+ 
 // Delete schedule item
 window.deleteSchedule = (index) => {
   schedule.splice(index, 1);
   localStorage.setItem("schedule", JSON.stringify(schedule));
   renderSchedule();
 };
-
+ 
 // Add schedule item
 addSchedBtn.addEventListener("click", () => {
   if (!schedTitle.value || !schedTime.value) {
@@ -244,14 +244,14 @@ addSchedBtn.addEventListener("click", () => {
   schedPriority.value = "normal";
   renderSchedule();
 });
-
+ 
 // ========== To-Do List ==========
 const taskText = document.getElementById('taskText');
 const taskPriority = document.getElementById('taskPriority');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 const taskList = document.getElementById('taskList');
-
+ 
 addTaskBtn.addEventListener('click', () => {
   const text = taskText.value.trim();
   if (!text) {
@@ -271,14 +271,14 @@ addTaskBtn.addEventListener('click', () => {
   taskText.value = '';
   renderTasks();
 });
-
+ 
 clearCompletedBtn.addEventListener('click', () => {
   let tasks = loadData(STORAGE_KEYS.tasks);
   tasks = tasks.filter(task => !task.done);
   saveData(STORAGE_KEYS.tasks, tasks);
   renderTasks();
 });
-
+ 
 function renderTasks() {
   const tasks = loadData(STORAGE_KEYS.tasks);
   taskList.innerHTML = '';
@@ -294,7 +294,7 @@ function renderTasks() {
     const li = document.createElement('li');
     li.className = 'item';
     
-    const priorityBadge = task.priority === 'high' ? '🔴' : 
+    const priorityBadge = task.priority === 'high' ? '🔴' :
                          task.priority === 'low' ? '🟢' : '🟡';
     
     li.innerHTML = `
@@ -313,7 +313,7 @@ function renderTasks() {
     taskList.innerHTML = '<li class="small muted">No tasks yet</li>';
   }
 }
-
+ 
 function toggleTask(id) {
   const tasks = loadData(STORAGE_KEYS.tasks);
   const task = tasks.find(t => t.id === id);
@@ -323,21 +323,21 @@ function toggleTask(id) {
     renderTasks();
   }
 }
-
+ 
 function deleteTask(id) {
   let tasks = loadData(STORAGE_KEYS.tasks);
   tasks = tasks.filter(task => task.id !== id);
   saveData(STORAGE_KEYS.tasks, tasks);
   renderTasks();
 }
-
+ 
 // ========== Mood Tracker (with delete options) ==========
 const moodSlider = document.getElementById("moodSlider");
 const moodEmoji = document.getElementById("moodEmoji");
 const saveMoodBtn = document.getElementById("saveMoodBtn");
 const moodList = document.getElementById("moodList");
 const clearMoodsBtn = document.getElementById("clearMoodsBtn");
-
+ 
 // Emoji map
 const moodFaces = {
   1: "😢",
@@ -346,7 +346,7 @@ const moodFaces = {
   4: "🙂",
   5: "😁"
 };
-
+ 
 // Word descriptions
 const moodWords = {
   1: "Very Bad",
@@ -355,21 +355,21 @@ const moodWords = {
   4: "Good",
   5: "Great"
 };
-
+ 
 // Load saved moods
 let moods = JSON.parse(localStorage.getItem("moods") || "[]");
-
+ 
 // Slider emoji updater
 moodSlider.addEventListener("input", () => {
   const val = Number(moodSlider.value);
   moodEmoji.textContent = moodFaces[val];
 });
-
+ 
 // Save a mood entry
 saveMoodBtn.addEventListener("click", () => {
   let value = Number(moodSlider.value);
   if (value < 1 || value > 5) value = 3;
-
+ 
   const newMood = {
     id: Date.now(),
     mood: value,
@@ -377,26 +377,26 @@ saveMoodBtn.addEventListener("click", () => {
     word: moodWords[value],
     timestamp: new Date().toLocaleString()
   };
-
+ 
   moods.unshift(newMood);
   saveMoods();
   renderMoods();
   updateStreak();
 });
-
+ 
 // Save moods to localStorage
 function saveMoods() {
   localStorage.setItem("moods", JSON.stringify(moods));
 }
-
+ 
 // Render list (with delete buttons)
 function renderMoods() {
   moodList.innerHTML = "";
-
+ 
   moods.forEach(entry => {
     const li = document.createElement("li");
     li.className = "item";
-
+ 
     li.innerHTML = `
       <div class="left" style="display:flex; align-items:center; gap:10px;">
         <span style="font-size:1.3rem">${entry.emoji}</span>
@@ -407,17 +407,17 @@ function renderMoods() {
         <button class="deleteMoodBtn" data-id="${entry.id}" style="background:#ff6b6b; padding:4px 8px;">X</button>
       </div>
     `;
-
+ 
     moodList.appendChild(li);
   });
-
+ 
   if (moods.length === 0) {
     moodList.innerHTML = '<li class="small muted">No moods recorded</li>';
   }
-
+ 
   bindMoodDeleteButtons();
 }
-
+ 
 // Attach delete handlers
 function bindMoodDeleteButtons() {
   document.querySelectorAll(".deleteMoodBtn").forEach(btn => {
@@ -429,21 +429,21 @@ function bindMoodDeleteButtons() {
     });
   });
 }
-
+ 
 // Clear ALL mood entries
 if (clearMoodsBtn) {
   clearMoodsBtn.addEventListener("click", () => {
     if (!confirm("Delete ALL saved moods?")) return;
-
+ 
     moods = [];
     saveMoods();
     renderMoods();
   });
 }
-
+ 
 // ========== Streak Counter ==========
 const streakCount = document.getElementById('streakCount');
-
+ 
 function updateStreak() {
   const streakData = JSON.parse(localStorage.getItem(STORAGE_KEYS.streak)) || {
     count: 0,
@@ -474,7 +474,7 @@ function updateStreak() {
   localStorage.setItem(STORAGE_KEYS.streak, JSON.stringify(streakData));
   streakCount.textContent = streakData.count;
 }
-
+ 
 function loadStreak() {
   const streakData = JSON.parse(localStorage.getItem(STORAGE_KEYS.streak)) || {
     count: 0,
@@ -482,12 +482,12 @@ function loadStreak() {
   };
   streakCount.textContent = streakData.count;
 }
-
+ 
 // ========== Memories ==========
 const memories = document.getElementById('memories');
 const regenMemoriesBtn = document.getElementById('regenMemoriesBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
-
+ 
 function renderMemories() {
   const savedNotes = JSON.parse(localStorage.getItem("notes") || "[]");
   const photos = loadData(STORAGE_KEYS.photos);
@@ -522,7 +522,7 @@ function renderMemories() {
     const card = document.createElement('div');
     card.className = 'mem-card';
     
-    const icon = mem.type === 'note' ? '📝' : 
+    const icon = mem.type === 'note' ? '📝' :
                  mem.type === 'photo' ? '📷' : '😊';
     
     card.innerHTML = `
@@ -537,9 +537,9 @@ function renderMemories() {
     memories.innerHTML = '<div class="small muted">No memories yet. Start journaling!</div>';
   }
 }
-
+ 
 regenMemoriesBtn.addEventListener('click', renderMemories);
-
+ 
 clearAllBtn.addEventListener('click', () => {
   if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
     Object.values(STORAGE_KEYS).forEach(key => {
@@ -548,7 +548,7 @@ clearAllBtn.addEventListener('click', () => {
     location.reload();
   }
 });
-
+ 
 // ========== Settings ==========
 const openSettingsBtn = document.getElementById('openSettingsBtn');
 const settingsCard = document.getElementById('settingsCard');
@@ -558,11 +558,11 @@ const bgColor = document.getElementById('bgColor');
 const cardColor = document.getElementById('cardColor');
 const fontSelect = document.getElementById('fontSelect');
 const fontSizeSelect = document.getElementById('fontSizeSelect');
-
+ 
 openSettingsBtn.addEventListener('click', () => {
   settingsCard.style.display = settingsCard.style.display === 'none' ? 'block' : 'none';
 });
-
+ 
 function applySettings() {
   document.documentElement.style.setProperty('--primary-color', primaryColor.value);
   document.documentElement.style.setProperty('--accent-color', accentColor.value);
@@ -582,7 +582,7 @@ function applySettings() {
   };
   saveData(STORAGE_KEYS.settings, settings);
 }
-
+ 
 function loadSettings() {
   const settings = localStorage.getItem(STORAGE_KEYS.settings);
   if (settings) {
@@ -596,12 +596,12 @@ function loadSettings() {
     applySettings();
   }
 }
-
+ 
 // Add event listeners to all settings inputs
 [primaryColor, accentColor, bgColor, cardColor, fontSelect, fontSizeSelect].forEach(input => {
   input.addEventListener('change', applySettings);
 });
-
+ 
 // ========== Initialize ==========
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMemories();
   initKeyboardShortcuts();
 });
-
+ 
 // ========== Keyboard Shortcuts ==========
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
@@ -639,7 +639,7 @@ function initKeyboardShortcuts() {
     }
   });
 }
-
+ 
 // ========== Export Data ==========
 function exportData() {
   const data = {
@@ -659,16 +659,16 @@ function exportData() {
   a.click();
   URL.revokeObjectURL(url);
 }
-
+ 
 // ========== Task Search/Filter ==========
 function filterTasks(searchTerm) {
   const tasks = loadData(STORAGE_KEYS.tasks);
-  const filtered = tasks.filter(task => 
+  const filtered = tasks.filter(task =>
     task.text.toLowerCase().includes(searchTerm.toLowerCase())
   );
   renderFilteredTasks(filtered);
 }
-
+ 
 function renderFilteredTasks(tasks) {
   taskList.innerHTML = '';
   
@@ -682,7 +682,7 @@ function renderFilteredTasks(tasks) {
     const li = document.createElement('li');
     li.className = 'item';
     
-    const priorityBadge = task.priority === 'high' ? '🔴' : 
+    const priorityBadge = task.priority === 'high' ? '🔴' :
                          task.priority === 'low' ? '🟢' : '🟡';
     
     li.innerHTML = `
@@ -701,7 +701,7 @@ function renderFilteredTasks(tasks) {
     taskList.innerHTML = '<li class="small muted">No tasks found</li>';
   }
 }
-
+ 
 // ========== Statistics ==========
 function getStats() {
   const tasks = loadData(STORAGE_KEYS.tasks);
@@ -710,7 +710,7 @@ function getStats() {
   const logs = loadData(STORAGE_KEYS.quickLogs);
   
   const completedTasks = tasks.filter(t => t.done).length;
-  const avgMood = moods.length > 0 
+  const avgMood = moods.length > 0
     ? (moods.reduce((sum, m) => sum + m.value, 0) / moods.length).toFixed(1)
     : 0;
   
