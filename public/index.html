@@ -13,27 +13,29 @@
     <header>
       <div>
         <h1>DaySpark — Student Daily Journal</h1>
-        <div class="sub">Log your day with photos, schedule, tasks, moods & memories</div>
       </div>
       <div class="controls">
         <div id="streakWrap" class="streak card" title="Consecutive journaling days">
           <div id="streakCount">0</div>
           <div style="font-size:0.95rem">day streak</div>
         </div>
-        <a href="login.html" class="ghost" style="text-decoration: none; display: inline-block; padding: 8px 12px; border-radius: 8px;">🔐 Login</a>
         <button id="openSettingsBtn" class="ghost">⚙ Settings</button>
+        <a href="login.html">Login</a>
       </div>
     </header>
 
-    <div class="left-col"> <!-- Photo Upload / Journal -->
+    <div class="left-col">
+      <!-- Photo Upload / Journal -->
       <div class="card" id="photoPanel">
         <div class="panel-title">
-          <div> <strong>Photo Journal</strong>
-            <div class="small">Upload photos and add a caption</div>
+          <div>
+            <h3>Photo Journal</h3>
           </div>
         </div>
         <div>
-          <input id="photoInput" type="file" accept="image/*" />
+          <div class="photo">
+            <input id="photoInput" type="file" accept="image/*" />
+          </div>
           <label for="photoCaption" style="margin-top:8px">Caption</label>
           <input id="photoCaption" type="text" placeholder="Write a caption..." />
           <div style="display:flex;gap:8px;margin-top:8px">
@@ -44,15 +46,14 @@
         <hr style="margin:12px 0;border:none;border-top:1px solid #eef6ff">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div class="small">Gallery</div>
-          <div class="small muted">Stored locally on this device</div>
         </div>
         <div id="gallery" class="gallery"></div>
       </div>
 
       <!-- Schedule -->
       <div class="card" id="schedulePanel">
-        <div class="panel-title"> <strong>Daily Schedule</strong>
-          <div class="small">Add classes, study time or events</div>
+        <div class="panel-title">
+          <h3>Daily Schedule</h3>
         </div>
         <div class="row" style="margin-bottom:8px">
           <input id="schedTitle" type="text" placeholder="Event title (e.g., Math)" />
@@ -72,8 +73,8 @@
 
       <!-- To-Do -->
       <div class="card" id="todoPanel">
-        <div class="panel-title"> <strong>To-Do List</strong>
-          <div class="small">Tasks, priorities and quick check-offs</div>
+        <div class="panel-title">
+          <h3>To-Do List</h3>
         </div>
         <div class="row">
           <input id="taskText" type="text" placeholder="New task" />
@@ -93,8 +94,8 @@
 
       <!-- Mood Tracker -->
       <div class="card" id="moodPanel">
-        <div class="panel-title"> <strong>Mood Scale</strong>
-          <div class="small">Log your mood each day (emoji + slider)</div>
+        <div class="panel-title">
+          <h3>Mood Scale</h3>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <div class="mood-emoji" id="moodEmoji">🙂</div>
@@ -110,20 +111,19 @@
     <aside class="right-col">
       <!-- Quick Log Today -->
       <div class="card">
-        <div class="panel-title"> <strong>Quick Log Today</strong>
-          <div class="small">Add a short note that counts toward streak</div>
+        <div class="panel-title">
+          <h3>Quick Log Today</h3>
         </div>
         <textarea id="quickNote" placeholder="Write a one-line note about today..."></textarea>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button id="saveQuickBtn">Save Quick Log</button>
-          <button id="exportBtn" class="ghost">Export JSON</button>
         </div>
       </div>
 
       <!-- Memories -->
       <div class="card">
-        <div class="panel-title"> <strong>Memories</strong>
-          <div class="small">Automatic highlights from your entries</div>
+        <div class="panel-title">
+          <h3>Memories</h3>
         </div>
         <div id="memories" class="memories-list"></div>
         <div style="margin-top:8px;display:flex;gap:8px">
@@ -135,24 +135,30 @@
 
       <!-- Settings (hidden until clicked) -->
       <div class="card" id="settingsCard" style="display:none">
-        <div class="panel-title"> <strong>Appearance Settings</strong>
+        <div class="panel-title">
+          <h3>Appearance Settings</h3>
           <div class="small">Customize fonts & colors</div>
         </div>
         <div class="settings-grid">
-          <div> <label>Primary color</label> <input type="color" id="primaryColor" value="#5b8def" class="color-swatch" /> </div>
-          <div> <label>Accent color</label> <input type="color" id="accentColor" value="#ffcc00" class="color-swatch" /></div>
-          <div> <label>Background color</label> <input type="color" id="bgColor" value="#f7f9fc" class="color-swatch" /></div>
-          <div> <label>Card color</label> <input type="color" id="cardColor" value="#ffffff" class="color-swatch" /></div>
-          <div> <label>Font family</label>
+          <div><label>Primary color</label> <input type="color" id="primaryColor" value="#5b8def"
+              class="color-swatch" /></div>
+          <div><label>Accent color</label> <input type="color" id="accentColor" value="#ffcc00" class="color-swatch" />
+          </div>
+          <div><label>Background color</label> <input type="color" id="bgColor" value="#f7f9fc" class="color-swatch" />
+          </div>
+          <div><label>Card color</label> <input type="color" id="cardColor" value="#ffffff" class="color-swatch" />
+          </div>
+          <div><label>Font family</label>
             <select id="fontSelect">
-              <option value='"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'>Inter / System</option>
+              <option value='"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'>Inter /
+                System</option>
               <option value='"Roboto", "Helvetica Neue", Arial, sans-serif'>Roboto</option>
               <option value='"Georgia", serif'>Georgia (serif)</option>
               <option value='"Comic Sans MS", "Comic Sans", cursive'>Playful (comic)</option>
               <option value='"Courier New", monospace'>Monospace</option>
             </select>
           </div>
-          <div> <label>Base font size</label>
+          <div><label>Base font size</label>
             <select id="fontSizeSelect">
               <option value="14px">14px (compact)</option>
               <option value="16px" selected>16px (default)</option>
