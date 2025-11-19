@@ -2,15 +2,30 @@
 
 // ========== Data Storage Keys ==========
 const STORAGE_KEYS = {
+<<<<<<< HEAD
   quickLogs: 'dayspark_quickLogs',
   photos: 'dayspark_photos',
   schedule: 'dayspark_schedule',
   tasks: 'dayspark_tasks',
   moods: 'dayspark_moods',
+=======
+  photos: 'dayspark_photos',
+  tasks: 'dayspark_tasks',
+>>>>>>> Honami
   streak: 'dayspark_streak',
   settings: 'dayspark_settings'
 };
 
+<<<<<<< HEAD
+=======
+// Legacy keys (used directly as strings)
+const LEGACY_KEYS = {
+  notes: 'notes',
+  schedule: 'schedule',
+  moods: 'moods'
+};
+
+>>>>>>> Honami
 // ========== Utility Functions ==========
 function loadData(key) {
   const data = localStorage.getItem(key);
@@ -41,7 +56,11 @@ const clearNotesBtn = document.getElementById("clearNotesBtn");
 const notesContainer = document.getElementById("notesContainer");
 
 // Load saved notes on startup
+<<<<<<< HEAD
 let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+=======
+let notes = JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]");
+>>>>>>> Honami
 
 // Add a new note
 addNoteBtn.addEventListener("click", () => {
@@ -64,7 +83,11 @@ addNoteBtn.addEventListener("click", () => {
 
 // Save notes to localStorage
 function saveNotes() {
+<<<<<<< HEAD
   localStorage.setItem("notes", JSON.stringify(notes));
+=======
+  localStorage.setItem(LEGACY_KEYS.notes, JSON.stringify(notes));
+>>>>>>> Honami
 }
 
 // Render notes as sticky cards
@@ -101,6 +124,10 @@ clearNotesBtn.addEventListener("click", () => {
   notes = [];
   saveNotes();
   renderNotes();
+<<<<<<< HEAD
+=======
+  renderMemories();
+>>>>>>> Honami
 });
 
 // ========== Photo Journal ==========
@@ -131,6 +158,10 @@ function addPhoto(markToday = false) {
     photoInput.value = '';
     photoCaption.value = '';
     renderGallery();
+<<<<<<< HEAD
+=======
+    renderMemories();
+>>>>>>> Honami
     
     if (markToday) {
       updateStreak();
@@ -165,7 +196,12 @@ function renderGallery() {
   }
 }
 
+<<<<<<< HEAD
 function deletePhoto(id) {
+=======
+// Make deletePhoto global for onclick
+window.deletePhoto = function(id) {
+>>>>>>> Honami
   if (confirm('Delete this photo?')) {
     let photos = loadData(STORAGE_KEYS.photos);
     photos = photos.filter(photo => photo.id !== id);
@@ -192,7 +228,11 @@ const addSchedBtn = document.getElementById("addSchedBtn");
 const scheduleList = document.getElementById("scheduleList");
 
 // Load existing schedule from localStorage
+<<<<<<< HEAD
 let schedule = JSON.parse(localStorage.getItem("schedule")) || [];
+=======
+let schedule = JSON.parse(localStorage.getItem(LEGACY_KEYS.schedule) || "[]");
+>>>>>>> Honami
 
 // Render items on page
 function renderSchedule() {
@@ -202,11 +242,23 @@ function renderSchedule() {
     li.className = "item";
     li.innerHTML = `
       <div class="left">
+<<<<<<< HEAD
         <strong>${item.title}</strong>
         <span class="time">${formatTimeTo12Hour(item.time)}</span>
         <span class="badge">${item.priority}</span>
       </div>
       <div class="right">
+=======
+        <span class="${item.done ? 'task-done' : ''}">
+          <strong>${item.title}</strong>
+          <span class="time">${formatTimeTo12Hour(item.time)}</span>
+          <span class="badge">${item.priority}</span>
+        </span>
+      </div>
+      <div class="right">
+        <button onclick="toggleSchedule(${index})" class="ghost">${item.done ? '↩' : '✓'}</button>
+        <button onclick="editSchedule(${index})" class="ghost">✏️</button>
+>>>>>>> Honami
         <button onclick="deleteSchedule(${index})" class="ghost">❌</button>
       </div>
     `;
@@ -218,10 +270,37 @@ function renderSchedule() {
   }
 }
 
+<<<<<<< HEAD
 // Delete schedule item
 window.deleteSchedule = (index) => {
   schedule.splice(index, 1);
   localStorage.setItem("schedule", JSON.stringify(schedule));
+=======
+// Toggle schedule item completion
+window.toggleSchedule = function(index) {
+  schedule[index].done = !schedule[index].done;
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
+  renderSchedule();
+};
+
+// Edit schedule item
+window.editSchedule = function(index) {
+  const item = schedule[index];
+  schedTitle.value = item.title;
+  schedTime.value = item.time;
+  schedPriority.value = item.priority;
+  
+  // Remove the item being edited
+  schedule.splice(index, 1);
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
+  renderSchedule();
+};
+
+// Delete schedule item
+window.deleteSchedule = function(index) {
+  schedule.splice(index, 1);
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
+>>>>>>> Honami
   renderSchedule();
 };
 
@@ -238,7 +317,11 @@ addSchedBtn.addEventListener("click", () => {
   };
   
   schedule.push(newEvent);
+<<<<<<< HEAD
   localStorage.setItem("schedule", JSON.stringify(schedule));
+=======
+  localStorage.setItem(LEGACY_KEYS.schedule, JSON.stringify(schedule));
+>>>>>>> Honami
   schedTitle.value = "";
   schedTime.value = "";
   schedPriority.value = "normal";
@@ -303,6 +386,10 @@ function renderTasks() {
       </div>
       <div class="right">
         <button class="ghost" onclick="toggleTask('${task.id}')">${task.done ? '↩' : '✓'}</button>
+<<<<<<< HEAD
+=======
+        <button class="ghost" onclick="editTask('${task.id}')">✏️</button>
+>>>>>>> Honami
         <button class="ghost" onclick="deleteTask('${task.id}')">✕</button>
       </div>
     `;
@@ -314,7 +401,12 @@ function renderTasks() {
   }
 }
 
+<<<<<<< HEAD
 function toggleTask(id) {
+=======
+// Make toggleTask global for onclick
+window.toggleTask = function(id) {
+>>>>>>> Honami
   const tasks = loadData(STORAGE_KEYS.tasks);
   const task = tasks.find(t => t.id === id);
   if (task) {
@@ -324,7 +416,27 @@ function toggleTask(id) {
   }
 }
 
+<<<<<<< HEAD
 function deleteTask(id) {
+=======
+// Make editTask global for onclick
+window.editTask = function(id) {
+  let tasks = loadData(STORAGE_KEYS.tasks);
+  const task = tasks.find(t => t.id === id);
+  if (task) {
+    taskText.value = task.text;
+    taskPriority.value = task.priority;
+    
+    // Remove the task being edited
+    tasks = tasks.filter(t => t.id !== id);
+    saveData(STORAGE_KEYS.tasks, tasks);
+    renderTasks();
+  }
+}
+
+// Make deleteTask global for onclick
+window.deleteTask = function(id) {
+>>>>>>> Honami
   let tasks = loadData(STORAGE_KEYS.tasks);
   tasks = tasks.filter(task => task.id !== id);
   saveData(STORAGE_KEYS.tasks, tasks);
@@ -357,7 +469,11 @@ const moodWords = {
 };
 
 // Load saved moods
+<<<<<<< HEAD
 let moods = JSON.parse(localStorage.getItem("moods") || "[]");
+=======
+let moods = JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]");
+>>>>>>> Honami
 
 // Slider emoji updater
 moodSlider.addEventListener("input", () => {
@@ -381,12 +497,20 @@ saveMoodBtn.addEventListener("click", () => {
   moods.unshift(newMood);
   saveMoods();
   renderMoods();
+<<<<<<< HEAD
+=======
+  renderMemories();
+>>>>>>> Honami
   updateStreak();
 });
 
 // Save moods to localStorage
 function saveMoods() {
+<<<<<<< HEAD
   localStorage.setItem("moods", JSON.stringify(moods));
+=======
+  localStorage.setItem(LEGACY_KEYS.moods, JSON.stringify(moods));
+>>>>>>> Honami
 }
 
 // Render list (with delete buttons)
@@ -426,6 +550,10 @@ function bindMoodDeleteButtons() {
       moods = moods.filter(m => m.id !== id);
       saveMoods();
       renderMoods();
+<<<<<<< HEAD
+=======
+      renderMemories();
+>>>>>>> Honami
     });
   });
 }
@@ -438,6 +566,10 @@ if (clearMoodsBtn) {
     moods = [];
     saveMoods();
     renderMoods();
+<<<<<<< HEAD
+=======
+    renderMemories();
+>>>>>>> Honami
   });
 }
 
@@ -489,9 +621,15 @@ const regenMemoriesBtn = document.getElementById('regenMemoriesBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 
 function renderMemories() {
+<<<<<<< HEAD
   const savedNotes = JSON.parse(localStorage.getItem("notes") || "[]");
   const photos = loadData(STORAGE_KEYS.photos);
   const moods = loadData(STORAGE_KEYS.moods);
+=======
+  const savedNotes = JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]");
+  const photos = loadData(STORAGE_KEYS.photos);
+  const savedMoods = JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]");
+>>>>>>> Honami
   
   memories.innerHTML = '';
   
@@ -507,10 +645,17 @@ function renderMemories() {
       text: photo.caption,
       date: photo.date
     })),
+<<<<<<< HEAD
     ...moods.map(mood => ({
       type: 'mood',
       text: `Felt ${mood.emoji}`,
       date: mood.date
+=======
+    ...savedMoods.map(mood => ({
+      type: 'mood',
+      text: `Felt ${mood.emoji}`,
+      date: mood.timestamp ? new Date(mood.timestamp).toISOString() : new Date(mood.id).toISOString()
+>>>>>>> Honami
     }))
   ];
   
@@ -542,9 +687,20 @@ regenMemoriesBtn.addEventListener('click', renderMemories);
 
 clearAllBtn.addEventListener('click', () => {
   if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+<<<<<<< HEAD
     Object.values(STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
+=======
+    // Clear all STORAGE_KEYS
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+    // Also clear legacy keys
+    Object.values(LEGACY_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+>>>>>>> Honami
     location.reload();
   }
 });
@@ -612,6 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMoods();
   renderNotes();
   renderMemories();
+<<<<<<< HEAD
   initKeyboardShortcuts();
 });
 
@@ -648,6 +805,18 @@ function exportData() {
     schedule: loadData(STORAGE_KEYS.schedule),
     tasks: loadData(STORAGE_KEYS.tasks),
     moods: loadData(STORAGE_KEYS.moods),
+=======
+});
+
+// ========== Export Data ==========
+function exportData() {
+  const data = {
+    notes: JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]"),
+    photos: loadData(STORAGE_KEYS.photos),
+    schedule: JSON.parse(localStorage.getItem(LEGACY_KEYS.schedule) || "[]"),
+    tasks: loadData(STORAGE_KEYS.tasks),
+    moods: JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]"),
+>>>>>>> Honami
     exportDate: new Date().toISOString()
   };
   
@@ -660,6 +829,7 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
+<<<<<<< HEAD
 // ========== Task Search/Filter ==========
 function filterTasks(searchTerm) {
   const tasks = loadData(STORAGE_KEYS.tasks);
@@ -712,6 +882,18 @@ function getStats() {
   const completedTasks = tasks.filter(t => t.done).length;
   const avgMood = moods.length > 0 
     ? (moods.reduce((sum, m) => sum + m.value, 0) / moods.length).toFixed(1)
+=======
+// ========== Statistics ==========
+function getStats() {
+  const tasks = loadData(STORAGE_KEYS.tasks);
+  const savedMoods = JSON.parse(localStorage.getItem(LEGACY_KEYS.moods) || "[]");
+  const photos = loadData(STORAGE_KEYS.photos);
+  const savedNotes = JSON.parse(localStorage.getItem(LEGACY_KEYS.notes) || "[]");
+  
+  const completedTasks = tasks.filter(t => t.done).length;
+  const avgMood = savedMoods.length > 0 
+    ? (savedMoods.reduce((sum, m) => sum + m.mood, 0) / savedMoods.length).toFixed(1)
+>>>>>>> Honami
     : 0;
   
   return {
@@ -719,8 +901,14 @@ function getStats() {
     completedTasks: completedTasks,
     completionRate: tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0,
     totalPhotos: photos.length,
+<<<<<<< HEAD
     totalLogs: logs.length,
     avgMood: avgMood,
     totalEntries: photos.length + logs.length + moods.length
+=======
+    totalNotes: savedNotes.length,
+    avgMood: avgMood,
+    totalEntries: photos.length + savedNotes.length + savedMoods.length
+>>>>>>> Honami
   };
 }
